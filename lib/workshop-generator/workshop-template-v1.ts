@@ -1,5 +1,17 @@
 import type { WorkshopInput } from "@/lib/workshop-generator/workshop-schema";
 
+const PLACEHOLDER = {
+  headerBanner: "https://placehold.co/1400x260/png?text=Machinists+Institute+Header+Banner",
+  logo: "https://placehold.co/220x72/png?text=MI+Logo",
+  detailsIcon: "https://placehold.co/22x22/png?text=D",
+  objectivesIcon: "https://placehold.co/22x22/png?text=O",
+  resourcesIcon: "https://placehold.co/22x22/png?text=R",
+  whatToDoIcon: "https://placehold.co/22x22/png?text=W",
+  submissionIcon: "https://placehold.co/22x22/png?text=S",
+  centerImage: "https://placehold.co/400x221/png?text=Workshop+Image",
+  footerBanner: "https://placehold.co/1400x180/png?text=Machinists+Institute+Footer+Banner"
+};
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -9,68 +21,79 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#039;");
 }
 
-function renderText(value: string) {
-  if (!value.trim()) {
-    return '<p style="margin:0;color:#6c757d;">Pending instructor input.</p>';
-  }
-
-  return value
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p style="margin:0 0 0.75rem 0;line-height:1.5;">${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`)
-    .join("");
+function textOr(value: string, fallback: string) {
+  const normalized = value.trim();
+  return normalized ? escapeHtml(normalized).replace(/\n/g, "<br />") : fallback;
 }
 
-function renderList(items: string[]) {
+function listItemsOr(items: string[], fallbackCount = 3) {
   if (items.length === 0) {
-    return '<p style="margin:0;color:#6c757d;">Pending instructor input.</p>';
+    return Array.from({ length: fallbackCount })
+      .map(() => "<li>&nbsp;</li>")
+      .join("");
   }
-
-  return `<ul style="margin:0;padding-left:1.2rem;line-height:1.5;">${items
-    .map((item) => `<li style="margin-bottom:0.35rem;">${escapeHtml(item)}</li>`)
-    .join("")}</ul>`;
-}
-
-type SectionConfig = {
-  heading: string;
-  content: string;
-};
-
-function renderSection(section: SectionConfig) {
-  return `
-  <section style="margin:0 0 1.1rem 0;padding:0.9rem;border:1px solid #d9dde2;border-radius:8px;background:#fff;">
-    <h2 style="margin:0 0 0.65rem 0;font-size:1.15rem;color:#0e4d70;">${escapeHtml(section.heading)}</h2>
-    ${section.content}
-  </section>`;
+  return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
 export function renderWorkshopTemplateV1(input: WorkshopInput) {
-  const sections = [
-    renderSection({ heading: "Workshop Overview", content: renderText(input.overview) }),
-    renderSection({ heading: "Learning Objectives", content: renderList(input.objectives) }),
-    renderSection({ heading: "Student Task / Project Description", content: renderText(input.studentTask) }),
-    renderSection({ heading: "Materials", content: renderList(input.materials) }),
-    renderSection({ heading: "Equipment", content: renderList(input.equipment) }),
-    renderSection({ heading: "Workshop Flow / Class Sequence", content: renderList(input.workshopFlow) }),
-    renderSection({ heading: "Submission Requirements", content: renderList(input.submissionRequirements) }),
-    renderSection({ heading: "Learning Assets / Links", content: renderList(input.learningAssets) }),
-    renderSection({ heading: "Safety Notes", content: renderText(input.safetyNotes) }),
-    renderSection({ heading: "Estimated Duration", content: renderText(input.estimatedDuration) }),
-    renderSection({ heading: "Instructor Preparation Notes", content: renderText(input.instructorPrepNotes) }),
-    renderSection({ heading: "Assessment or Completion Criteria", content: renderText(input.assessmentCriteria) }),
-    renderSection({ heading: "Cleanup / Reset Instructions", content: renderText(input.cleanupResetInstructions) })
-  ];
+  const duration = textOr(input.estimatedDuration, "#hrs (Days)");
+  const titleLine =
+    input.courseLabel.trim() || input.title.trim()
+      ? `${escapeHtml(input.courseLabel || "Course Name")} | ${escapeHtml(input.title || "Activity Name")} (${escapeHtml(
+          input.estimatedDuration || "Hr"
+        )})`
+      : "Course Name | Activity Name (Hr)";
+  const overview = textOr(input.overview, "This module is...");
+  const format = textOr(input.safetyNotes, "&nbsp;");
+  const scope = textOr(input.studentTask, "&nbsp;");
+  const flowText =
+    input.workshopFlow.length > 0 ? escapeHtml(input.workshopFlow.join(" > ")) : "<strong>Day 1:</strong> &nbsp;<br /><strong>Day 2:</strong> &nbsp;";
+  const submissionPrimary = input.submissionRequirements[0]
+    ? escapeHtml(input.submissionRequirements[0])
+    : "[Details]";
+  const whatToDoItems = input.submissionRequirements.slice(0, 3);
 
   return `
-<!-- ASSUMPTION: Starter Canvas workshop template pending replacement with official Machinists Institute HTML format. -->
-<article style="font-family:Arial,sans-serif;color:#12212b;max-width:920px;">
-  <header style="margin-bottom:1rem;padding:1rem;background:#f0f5f8;border:1px solid #c8d7e2;border-radius:8px;">
-    <h1 style="margin:0 0 0.35rem 0;font-size:1.6rem;color:#0e4d70;">${escapeHtml(input.title || "Untitled Workshop")}</h1>
-    <p style="margin:0;font-size:0.95rem;">
-      <strong>Course:</strong> ${escapeHtml(input.courseLabel || "Not set")}
-      &nbsp;|&nbsp;
-      <strong>Term:</strong> ${escapeHtml(input.termCode || "Not set")}
-    </p>
-  </header>
-  ${sections.join("\n")}
-</article>`.trim();
+<div style="max-width: 900px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #222;">
+  <p style="text-align: center; margin: 0 0 14px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${PLACEHOLDER.headerBanner}" alt="Machinists Institute Header Banner" /></p>
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;"><img style="height: 48px; width: auto;" src="${PLACEHOLDER.logo}" alt="Machinists Institute Logo" />
+    <div style="color: #0e5a72; font-size: 1.2em;">${titleLine}</div>
+  </div>
+  <div style="background: #F5F6F7; border: 1px solid #DADDE1; border-radius: 6px; padding: 16px 16px;">
+    <h3 style="color: #0e5a72; margin: 0px 0px 8px; text-align: center;">Overview</h3>
+    <p style="margin: 0 0 10px 0;">${overview}</p>
+  </div>
+  <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
+  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${PLACEHOLDER.detailsIcon}" alt="Details icon" /> Details</h3>
+  <p><strong>Duration:</strong> ${duration}</p>
+  <p><strong>Format:</strong> ${format}</p>
+  <p><strong>Materials:</strong></p>
+  <ul>
+    ${listItemsOr([...input.materials, ...input.equipment], 3)}
+  </ul>
+  <p><strong>Scope:</strong> ${scope}<br /><br /><br /><img style="display: block; margin-left: auto; margin-right: auto;" src="${PLACEHOLDER.centerImage}" alt="Workshop image placeholder" width="400" height="221" /></p>
+  <p>&nbsp;</p>
+  <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
+  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${PLACEHOLDER.objectivesIcon}" alt="Objectives icon" /> Objectives</h3>
+  <ol style="list-style-type: decimal;">
+    ${listItemsOr(input.objectives, 3)}
+  </ol>
+  <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
+  <h3 style="color: #0e5a72; margin: 0 0 10px 0;"><img src="${PLACEHOLDER.resourcesIcon}" alt="Learning Resources icon" /> Learning Resources</h3>
+  <ul style="padding-left: 22px; font-size: 1.05em; line-height: 1.8; margin: 0;">
+    ${listItemsOr(input.learningAssets, 3)}
+  </ul>
+  <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
+  <h3 style="color: #0e5a72; margin: 0 0 10px 0;">Workshop Flow</h3>
+  <p style="margin: 0 0 10px 0;">${flowText}</p>
+  <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
+  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${PLACEHOLDER.whatToDoIcon}" alt="What To Do icon" /> What To Do</h3>
+  <p><strong>Step 1:</strong> ${whatToDoItems[0] ? escapeHtml(whatToDoItems[0]) : "&nbsp;"}</p>
+  <p><strong>Step 2:</strong> ${whatToDoItems[1] ? escapeHtml(whatToDoItems[1]) : "&nbsp;"}</p>
+  <p><strong>Step 3:</strong> ${whatToDoItems[2] ? escapeHtml(whatToDoItems[2]) : "&nbsp;"}</p>
+  <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
+  <h3 style="color: #0e5a72; margin: 0px 0px 8px; text-align: right;"><img src="${PLACEHOLDER.submissionIcon}" alt="Submission Details icon" /> Submission Details</h3>
+  <p style="font-size: 1.05em; margin: 0px; text-align: right;">${submissionPrimary}</p>
+  <p style="text-align: center; margin-top: 20px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${PLACEHOLDER.footerBanner}" alt="Machinists Institute Footer Banner" /></p>
+</div>`.trim();
 }
