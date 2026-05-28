@@ -9,6 +9,7 @@ function splitLines(value: string) {
 
 function normalizeList(items: string[]) {
   return items
+    .flatMap((item) => item.split(/\r?\n/))
     .map((item) => item.trim())
     .filter(Boolean)
     .filter((item, index, arr) => arr.indexOf(item) === index);

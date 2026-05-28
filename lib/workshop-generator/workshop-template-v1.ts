@@ -30,12 +30,19 @@ function textOr(value: string, fallback: string) {
 }
 
 function listItemsOr(items: string[], fallbackCount = 3) {
-  if (items.length === 0) {
+  const normalizedItems = items
+    .flatMap((item) => item.split(/\r?\n/))
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const uniqueItems = normalizedItems.filter((item, index, arr) => arr.indexOf(item) === index);
+
+  if (uniqueItems.length === 0) {
     return Array.from({ length: fallbackCount })
       .map(() => "<li>&nbsp;</li>")
       .join("");
   }
-  return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  return uniqueItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
 export function renderWorkshopTemplateV1(input: WorkshopInput) {
