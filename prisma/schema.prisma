@@ -1,0 +1,245 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Contributor {
+  id          String   @id @default(uuid()) @db.Uuid
+  displayName String   @unique @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("contributors")
+}
+
+model CourseImportBatch {
+  id         String   @id @default(uuid()) @db.Uuid
+  filename   String
+  source     String   @default("spreadsheet")
+  importedBy String?  @map("imported_by")
+  importedAt DateTime @default(now()) @map("imported_at")
+  rowCount   Int      @map("row_count")
+  notes      String?
+
+  courses Course[]
+
+  @@map("course_import_batches")
+}
+
+model Course {
+  id                   String   @id @default(uuid()) @db.Uuid
+  sourceImportBatchId  String   @map("source_import_batch_id") @db.Uuid
+  externalSource       String   @map("external_source")
+  externalId           String?  @map("external_id")
+  courseCode           String?  @map("course_code")
+  courseName           String   @map("course_name")
+  description          String?
+  hours                Float?
+  year                 Int?
+  quarter              Int?
+  syllabusUrl          String?  @map("syllabus_url")
+  canvasShellUrl       String?  @map("canvas_shell_url")
+  physicalInventoryUrl String?  @map("physical_inventory_url")
+  curriculumUrl        String?  @map("curriculum_url")
+  certsUrl             String?  @map("certs_url")
+  amatrolUrl           String?  @map("amatrol_url")
+  toolingUUrl          String?  @map("tooling_u_url")
+  electudeUrl          String?  @map("electude_url")
+  developmentStatus    String?  @map("development_status")
+  timelineStart        DateTime? @map("timeline_start")
+  timelineEnd          DateTime? @map("timeline_end")
+  enrollmentTrackerUrl String?  @map("enrollment_tracker_url")
+  rawImportJson        Json     @map("raw_import_json")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  sourceImportBatch CourseImportBatch @relation(fields: [sourceImportBatchId], references: [id], onDelete: Restrict)
+  outcomes          CourseOutcome[]
+  assets            CurriculumAsset[]
+  assetContextLinks AssetContextLink[]
+
+  @@index([courseCode])
+  @@index([courseName])
+  @@index([developmentStatus])
+  @@map("courses")
+}
+
+model CourseOutcome {
+  id            String   @id @default(uuid()) @db.Uuid
+  courseId      String   @map("course_id") @db.Uuid
+  outcomeCode   String?  @map("outcome_code")
+  description   String
+  rowIndex      Int      @map("row_index")
+  rawImportJson Json     @map("raw_import_json")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("course_outcomes")
+}
+
+model CurriculumAsset {
+  id             String   @id @default(uuid()) @db.Uuid
+  /// Nullable by design: future teams may draft reusable assets before choosing
+  /// a course. Course-specific provenance is recorded in asset_context_links so
+  /// imported reference data remains read-only and auditable.
+  courseId       String?  @map("course_id") @db.Uuid
+  assetType      String   @map("asset_type")
+  title          String
+  status         String   @default("Draft")
+  inputJson      Json     @map("input_json")
+  outputJson     Json     @map("output_json")
+  richTextOutput String   @map("rich_text_output")
+  htmlOutput     String   @map("html_output")
+  createdBy      String?  @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  course       Course?            @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  contextLinks AssetContextLink[]
+
+  @@index([courseId])
+  @@index([assetType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("curriculum_assets")
+}
+
+model AssetContextLink {
+  id           String   @id @default(uuid()) @db.Uuid
+  assetId      String   @map("asset_id") @db.Uuid
+  /// Describes which kind of reference context informed the draft, such as an
+  /// imported course row. Links are append-only provenance, not instructions to
+  /// update the linked reference record.
+  contextType  String   @map("context_type")
+  courseId     String?  @map("course_id") @db.Uuid
+  snapshotJson Json     @map("snapshot_json")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  asset  CurriculumAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  course Course?         @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  @@index([assetId])
+  @@index([courseId])
+  @@index([contextType])
+  @@map("asset_context_links")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum ActionHistoryStatus {
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+model User {
+  id               String         @id @default(cuid())
+  email            String         @unique
+  name             String?
+  passwordHash     String?        @map("password_hash")
+  role             Role           @default(STAFF)
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  workshopsCreated Workshop[]     @relation("WorkshopCreator")
+  actionHistory    ActionHistory[] @relation("ActorActionHistory")
+  accounts         Account[]
+  sessions         Session[]
+
+  @@map("users")
+}
+
+model ActionHistory {
+  id           String              @id @default(cuid())
+  timestamp    DateTime            @default(now())
+  actorUserId  String?             @map("actor_user_id")
+  actorEmail   String?             @map("actor_email")
+  actionType   String              @map("action_type")
+  description  String
+  area         String
+  affectedType String?             @map("affected_type")
+  affectedId   String?             @map("affected_id")
+  status       ActionHistoryStatus
+  metadata     Json?
+  actor        User?               @relation("ActorActionHistory", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([actorUserId, timestamp])
+  @@index([area, timestamp])
+  @@index([actionType, timestamp])
+  @@map("action_history")
+}
+
+enum WorkshopVisibility {
+  PRIVATE
+  STAFF_COMMONS
+}
+
+model Workshop {
+  id              String             @id @default(uuid()) @db.Uuid
+  title           String
+  courseLabel     String             @map("course_label")
+  termCode        String             @map("term_code")
+  summary         String?
+  tags            String[]           @default([])
+  inputJson       Json               @map("input_json")
+  templateVersion String             @default("workshop-template-v1") @map("template_version")
+  visibility      WorkshopVisibility @default(STAFF_COMMONS)
+  createdById     String?            @map("created_by_id")
+  createdByName   String?            @map("created_by_name")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  archivedAt      DateTime?          @map("archived_at")
+  creator         User?              @relation("WorkshopCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([courseLabel])
+  @@index([termCode])
+  @@index([title])
+  @@index([createdAt])
+  @@map("workshops")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}

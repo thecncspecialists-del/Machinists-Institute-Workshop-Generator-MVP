@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+.next/
+
+*.log
+dev-server-*.log
+cab-dev-server*.log
+
+coverage/
+dist/
+build/
+
+tsconfig.tsbuildinfo
