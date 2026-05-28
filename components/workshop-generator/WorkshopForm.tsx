@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import type { WorkshopInput } from "@/lib/workshop-generator/workshop-schema";
 import { isValidTermCode, termCodeHelperText } from "@/lib/workshop-generator/term-code";
 
@@ -9,8 +11,9 @@ type WorkshopFormProps = {
 };
 
 type FieldKey = Exclude<keyof WorkshopInput, "objectives" | "materials" | "equipment" | "workshopFlow" | "learningAssets" | "submissionRequirements" | "tags">;
+type ListFieldKey = "materials" | "equipment" | "objectives" | "learningAssets" | "workshopFlow" | "submissionRequirements" | "tags";
 
-const listFieldConfig: Array<{ key: keyof WorkshopInput; label: string }> = [
+const listFieldConfig: Array<{ key: ListFieldKey; label: string }> = [
   { key: "materials", label: "Details: Materials (one per line)" },
   { key: "equipment", label: "Details: Additional Materials / Equipment (one per line)" },
   { key: "objectives", label: "Objectives (one per line)" },
@@ -20,12 +23,50 @@ const listFieldConfig: Array<{ key: keyof WorkshopInput; label: string }> = [
   { key: "tags", label: "Tags (metadata, one per line)" }
 ];
 
+const listFieldKeys: ListFieldKey[] = listFieldConfig.map((field) => field.key);
+
+function toListDrafts(input: WorkshopInput): Record<ListFieldKey, string> {
+  return {
+    materials: input.materials.join("\n"),
+    equipment: input.equipment.join("\n"),
+    objectives: input.objectives.join("\n"),
+    learningAssets: input.learningAssets.join("\n"),
+    workshopFlow: input.workshopFlow.join("\n"),
+    submissionRequirements: input.submissionRequirements.join("\n"),
+    tags: input.tags.join("\n")
+  };
+}
+
 export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
+  const [listDrafts, setListDrafts] = useState<Record<ListFieldKey, string>>(() => toListDrafts(value));
+  const [activeListField, setActiveListField] = useState<ListFieldKey | null>(null);
+
+  useEffect(() => {
+    const nextDrafts = toListDrafts(value);
+    setListDrafts((previous) => {
+      const merged = { ...previous };
+      let changed = false;
+
+      for (const key of listFieldKeys) {
+        if (key === activeListField) {
+          continue;
+        }
+        if (previous[key] !== nextDrafts[key]) {
+          merged[key] = nextDrafts[key];
+          changed = true;
+        }
+      }
+
+      return changed ? merged : previous;
+    });
+  }, [activeListField, value]);
+
   function updateField(key: FieldKey, nextValue: string) {
     onChange({ ...value, [key]: nextValue });
   }
 
-  function updateList(key: keyof WorkshopInput, raw: string) {
+  function updateList(key: ListFieldKey, raw: string) {
+    setListDrafts((previous) => ({ ...previous, [key]: raw }));
     const listValue = raw
       .split(/\r?\n/)
       .map((item) => item.trim())
@@ -109,7 +150,9 @@ export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
             <label htmlFor={field.key}>{field.label}</label>
             <textarea
               id={field.key}
-              value={(value[field.key] as string[]).join("\n")}
+              value={listDrafts[field.key]}
+              onFocus={() => setActiveListField(field.key)}
+              onBlur={() => setActiveListField(null)}
               onChange={(event) => updateList(field.key, event.target.value)}
             />
           </div>
