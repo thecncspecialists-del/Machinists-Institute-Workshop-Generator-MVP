@@ -10,14 +10,14 @@ type WorkshopFormProps = {
 
 type FieldKey = Exclude<keyof WorkshopInput, "objectives" | "materials" | "equipment" | "workshopFlow" | "learningAssets" | "submissionRequirements" | "tags">;
 
-const listFieldConfig: Array<{ key: keyof WorkshopInput; label: string; required?: boolean }> = [
-  { key: "objectives", label: "Learning objectives" },
-  { key: "materials", label: "Materials" },
-  { key: "equipment", label: "Equipment" },
-  { key: "workshopFlow", label: "Workshop flow / class sequence" },
-  { key: "learningAssets", label: "Learning assets / links" },
-  { key: "submissionRequirements", label: "Submission requirements" },
-  { key: "tags", label: "Tags (one per line)" }
+const listFieldConfig: Array<{ key: keyof WorkshopInput; label: string }> = [
+  { key: "materials", label: "Details: Materials (one per line)" },
+  { key: "equipment", label: "Details: Additional Materials / Equipment (one per line)" },
+  { key: "objectives", label: "Objectives (one per line)" },
+  { key: "learningAssets", label: "Learning Resources (one per line)" },
+  { key: "workshopFlow", label: "Workshop Flow (type sequence or day-by-day notes)" },
+  { key: "submissionRequirements", label: "Submission Details (one per line)" },
+  { key: "tags", label: "Tags (metadata, one per line)" }
 ];
 
 export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
@@ -44,12 +44,12 @@ export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
 
       <div className="form-grid" style={{ marginTop: 14 }}>
         <div className="field full">
-          <label htmlFor="title">Workshop title *</label>
+          <label htmlFor="title">Activity Name *</label>
           <input id="title" value={value.title} onChange={(event) => updateField("title", event.target.value)} />
         </div>
 
         <div className="field">
-          <label htmlFor="courseLabel">Course *</label>
+          <label htmlFor="courseLabel">Course Name *</label>
           <input
             id="courseLabel"
             placeholder="MACH 102"
@@ -59,7 +59,7 @@ export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
         </div>
 
         <div className="field">
-          <label htmlFor="termCode">Term *</label>
+          <label htmlFor="termCode">Term Code (metadata) *</label>
           <input
             id="termCode"
             placeholder="SP2026"
@@ -75,8 +75,28 @@ export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
           <textarea id="overview" value={value.overview} onChange={(event) => updateField("overview", event.target.value)} />
         </div>
 
+        <div className="field">
+          <label htmlFor="estimatedDuration">Details: Duration</label>
+          <input
+            id="estimatedDuration"
+            placeholder="#hrs (Days)"
+            value={value.estimatedDuration}
+            onChange={(event) => updateField("estimatedDuration", event.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="safetyNotes">Details: Format</label>
+          <input
+            id="safetyNotes"
+            placeholder="Hands-on workshop"
+            value={value.safetyNotes}
+            onChange={(event) => updateField("safetyNotes", event.target.value)}
+          />
+        </div>
+
         <div className="field full">
-          <label htmlFor="studentTask">Student task / project description *</label>
+          <label htmlFor="studentTask">Details: Scope *</label>
           <textarea
             id="studentTask"
             value={value.studentTask}
@@ -96,25 +116,7 @@ export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
         ))}
 
         <div className="field full">
-          <label htmlFor="safetyNotes">Safety notes</label>
-          <textarea
-            id="safetyNotes"
-            value={value.safetyNotes}
-            onChange={(event) => updateField("safetyNotes", event.target.value)}
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="estimatedDuration">Estimated duration</label>
-          <input
-            id="estimatedDuration"
-            value={value.estimatedDuration}
-            onChange={(event) => updateField("estimatedDuration", event.target.value)}
-          />
-        </div>
-
-        <div className="field full">
-          <label htmlFor="instructorPrepNotes">Instructor preparation notes</label>
+          <label htmlFor="instructorPrepNotes">What To Do Steps (one per line for Step 1-3)</label>
           <textarea
             id="instructorPrepNotes"
             value={value.instructorPrepNotes}
@@ -123,7 +125,7 @@ export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
         </div>
 
         <div className="field full">
-          <label htmlFor="assessmentCriteria">Assessment or completion criteria</label>
+          <label htmlFor="assessmentCriteria">Internal Notes (optional)</label>
           <textarea
             id="assessmentCriteria"
             value={value.assessmentCriteria}
@@ -132,7 +134,7 @@ export function WorkshopForm({ value, onChange }: WorkshopFormProps) {
         </div>
 
         <div className="field full">
-          <label htmlFor="cleanupResetInstructions">Cleanup / reset instructions</label>
+          <label htmlFor="cleanupResetInstructions">Additional Internal Notes (optional)</label>
           <textarea
             id="cleanupResetInstructions"
             value={value.cleanupResetInstructions}

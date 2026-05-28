@@ -51,7 +51,11 @@ export function renderWorkshopTemplateV1(input: WorkshopInput) {
   const submissionPrimary = input.submissionRequirements[0]
     ? escapeHtml(input.submissionRequirements[0])
     : "[Details]";
-  const whatToDoItems = input.submissionRequirements.slice(0, 3);
+  const whatToDoItems = input.instructorPrepNotes
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 3);
 
   return `
 <div style="max-width: 900px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #222;">
