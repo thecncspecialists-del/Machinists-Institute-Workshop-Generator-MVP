@@ -1,15 +1,18 @@
 import type { WorkshopInput } from "@/lib/workshop-generator/workshop-schema";
 
-const PLACEHOLDER = {
-  headerBanner: "https://placehold.co/1400x260/png?text=Machinists+Institute+Header+Banner",
-  logo: "https://placehold.co/220x72/png?text=MI+Logo",
-  detailsIcon: "https://placehold.co/22x22/png?text=D",
-  objectivesIcon: "https://placehold.co/22x22/png?text=O",
-  resourcesIcon: "https://placehold.co/22x22/png?text=R",
-  whatToDoIcon: "https://placehold.co/22x22/png?text=W",
-  submissionIcon: "https://placehold.co/22x22/png?text=S",
+const assetBaseUrl =
+  process.env.NEXT_PUBLIC_WORKSHOP_ASSET_BASE_URL?.trim().replace(/\/+$/, "") || "https://workshops.thecnc.network";
+
+const BRAND_ASSETS = {
+  headerBanner: `${assetBaseUrl}/branding/mi-page-header.jpg`,
+  logo: `${assetBaseUrl}/branding/mi-logo-short.png`,
+  detailsIcon: `${assetBaseUrl}/Details.png`,
+  objectivesIcon: `${assetBaseUrl}/Objectives.png`,
+  resourcesIcon: `${assetBaseUrl}/Learning%20Resources.png`,
+  whatToDoIcon: `${assetBaseUrl}/What%20to%20Do.png`,
+  submissionIcon: `${assetBaseUrl}/Details.png`,
   centerImage: "https://placehold.co/400x221/png?text=Workshop+Image",
-  footerBanner: "https://placehold.co/1400x180/png?text=Machinists+Institute+Footer+Banner"
+  footerBanner: `${assetBaseUrl}/branding/mi-page-footer.jpg`
 };
 
 function escapeHtml(value: string) {
@@ -59,8 +62,8 @@ export function renderWorkshopTemplateV1(input: WorkshopInput) {
 
   return `
 <div style="max-width: 900px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #222;">
-  <p style="text-align: center; margin: 0 0 14px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${PLACEHOLDER.headerBanner}" alt="Machinists Institute Header Banner" /></p>
-  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;"><img style="height: 48px; width: auto;" src="${PLACEHOLDER.logo}" alt="Machinists Institute Logo" />
+  <p style="text-align: center; margin: 0 0 14px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${BRAND_ASSETS.headerBanner}" alt="Machinists Institute Header Banner" /></p>
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;"><img style="height: 48px; width: auto;" src="${BRAND_ASSETS.logo}" alt="Machinists Institute Logo" />
     <div style="color: #0e5a72; font-size: 1.2em;">${titleLine}</div>
   </div>
   <div style="background: #F5F6F7; border: 1px solid #DADDE1; border-radius: 6px; padding: 16px 16px;">
@@ -68,22 +71,22 @@ export function renderWorkshopTemplateV1(input: WorkshopInput) {
     <p style="margin: 0 0 10px 0;">${overview}</p>
   </div>
   <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
-  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${PLACEHOLDER.detailsIcon}" alt="Details icon" /> Details</h3>
+  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${BRAND_ASSETS.detailsIcon}" alt="Details icon" /> Details</h3>
   <p><strong>Duration:</strong> ${duration}</p>
   <p><strong>Format:</strong> ${format}</p>
   <p><strong>Materials:</strong></p>
   <ul>
     ${listItemsOr([...input.materials, ...input.equipment], 3)}
   </ul>
-  <p><strong>Scope:</strong> ${scope}<br /><br /><br /><img style="display: block; margin-left: auto; margin-right: auto;" src="${PLACEHOLDER.centerImage}" alt="Workshop image placeholder" width="400" height="221" /></p>
+  <p><strong>Scope:</strong> ${scope}<br /><br /><br /><img style="display: block; margin-left: auto; margin-right: auto;" src="${BRAND_ASSETS.centerImage}" alt="Workshop image placeholder" width="400" height="221" /></p>
   <p>&nbsp;</p>
   <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
-  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${PLACEHOLDER.objectivesIcon}" alt="Objectives icon" /> Objectives</h3>
+  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${BRAND_ASSETS.objectivesIcon}" alt="Objectives icon" /> Objectives</h3>
   <ol style="list-style-type: decimal;">
     ${listItemsOr(input.objectives, 3)}
   </ol>
   <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
-  <h3 style="color: #0e5a72; margin: 0 0 10px 0;"><img src="${PLACEHOLDER.resourcesIcon}" alt="Learning Resources icon" /> Learning Resources</h3>
+  <h3 style="color: #0e5a72; margin: 0 0 10px 0;"><img src="${BRAND_ASSETS.resourcesIcon}" alt="Learning Resources icon" /> Learning Resources</h3>
   <ul style="padding-left: 22px; font-size: 1.05em; line-height: 1.8; margin: 0;">
     ${listItemsOr(input.learningAssets, 3)}
   </ul>
@@ -91,13 +94,13 @@ export function renderWorkshopTemplateV1(input: WorkshopInput) {
   <h3 style="color: #0e5a72; margin: 0 0 10px 0;">Workshop Flow</h3>
   <p style="margin: 0 0 10px 0;">${flowText}</p>
   <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
-  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${PLACEHOLDER.whatToDoIcon}" alt="What To Do icon" /> What To Do</h3>
+  <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${BRAND_ASSETS.whatToDoIcon}" alt="What To Do icon" /> What To Do</h3>
   <p><strong>Step 1:</strong> ${whatToDoItems[0] ? escapeHtml(whatToDoItems[0]) : "&nbsp;"}</p>
   <p><strong>Step 2:</strong> ${whatToDoItems[1] ? escapeHtml(whatToDoItems[1]) : "&nbsp;"}</p>
   <p><strong>Step 3:</strong> ${whatToDoItems[2] ? escapeHtml(whatToDoItems[2]) : "&nbsp;"}</p>
   <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
-  <h3 style="color: #0e5a72; margin: 0px 0px 8px; text-align: right;"><img src="${PLACEHOLDER.submissionIcon}" alt="Submission Details icon" /> Submission Details</h3>
+  <h3 style="color: #0e5a72; margin: 0px 0px 8px; text-align: right;"><img src="${BRAND_ASSETS.submissionIcon}" alt="Submission Details icon" /> Submission Details</h3>
   <p style="font-size: 1.05em; margin: 0px; text-align: right;">${submissionPrimary}</p>
-  <p style="text-align: center; margin-top: 20px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${PLACEHOLDER.footerBanner}" alt="Machinists Institute Footer Banner" /></p>
+  <p style="text-align: center; margin-top: 20px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${BRAND_ASSETS.footerBanner}" alt="Machinists Institute Footer Banner" /></p>
 </div>`.trim();
 }

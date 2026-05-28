@@ -145,11 +145,11 @@ export function OutputTabs({
       {tab === "canvas" ? (
         <article className="canvas-card">
           <header className="canvas-card-header">
-            <img className="canvas-header-image" src="/MI Page Header.jpg" alt="Machinists Institute header banner" />
+            <img className="canvas-header-image" src="/branding/mi-page-header.jpg" alt="Machinists Institute header banner" />
           </header>
 
           <div className="canvas-title-row">
-            <img className="canvas-logo-image" src="/Logo.png" alt="Machinists Institute logo" />
+            <img className="canvas-logo-image" src="/branding/mi-logo-short.png" alt="Machinists Institute logo" />
             <span>{outputJson.title}</span>
           </div>
 
@@ -251,6 +251,7 @@ export function OutputTabs({
           <footer className="canvas-submission">
             <h3>Submission Details</h3>
             <p>{mapped.submission || " "}</p>
+            <img className="canvas-footer-image" src="/branding/mi-page-footer.jpg" alt="Machinists Institute footer banner" />
           </footer>
         </article>
       ) : null}
