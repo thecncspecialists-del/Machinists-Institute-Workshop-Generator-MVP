@@ -1,71 +1,31 @@
 import type { WorkshopInput } from "@/lib/workshop-generator/workshop-schema";
-
-const assetBaseUrl =
-  process.env.NEXT_PUBLIC_WORKSHOP_ASSET_BASE_URL?.trim().replace(/\/+$/, "") || "https://workshops.thecnc.network";
-
-const BRAND_ASSETS = {
-  headerBanner: `${assetBaseUrl}/branding/mi-page-header.jpg`,
-  logo: `${assetBaseUrl}/branding/mi-logo-short.png`,
-  detailsIcon: `${assetBaseUrl}/Details.png`,
-  objectivesIcon: `${assetBaseUrl}/Objectives.png`,
-  resourcesIcon: `${assetBaseUrl}/Learning%20Resources.png`,
-  whatToDoIcon: `${assetBaseUrl}/What%20to%20Do.png`,
-  submissionIcon: `${assetBaseUrl}/Details.png`,
-  centerImage: "https://placehold.co/400x221/png?text=Workshop+Image",
-  footerBanner: `${assetBaseUrl}/branding/mi-page-footer.jpg`
-};
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function textOr(value: string, fallback: string) {
-  const normalized = value.trim();
-  return normalized ? escapeHtml(normalized).replace(/\n/g, "<br />") : fallback;
-}
-
-function listItemsOr(items: string[], fallbackCount = 3) {
-  const normalizedItems = items
-    .flatMap((item) => item.split(/\r?\n/))
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  const uniqueItems = normalizedItems.filter((item, index, arr) => arr.indexOf(item) === index);
-
-  if (uniqueItems.length === 0) {
-    return Array.from({ length: fallbackCount })
-      .map(() => "<li>&nbsp;</li>")
-      .join("");
-  }
-  return uniqueItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-}
+import { BRAND_ASSETS, escapeHtml, listItemsOr, textOr } from "@/lib/workshop-generator/html-utils";
 
 export function renderWorkshopTemplateV1(input: WorkshopInput) {
   const duration = textOr(input.estimatedDuration, "#hrs (Days)");
   const titleLine =
     input.courseLabel.trim() || input.title.trim()
-      ? `${escapeHtml(input.courseLabel || "Course Name")} | ${escapeHtml(input.title || "Activity Name")} (${escapeHtml(
+      ? `${escapeHtml(input.courseLabel || "Course Name")} | ${escapeHtml(input.title || "Workshop 1")} (${escapeHtml(
           input.estimatedDuration || "Hr"
         )})`
-      : "Course Name | Activity Name (Hr)";
+      : "Course Name | Workshop 1 (Hr)";
   const overview = textOr(input.overview, "This module is...");
   const format = textOr(input.safetyNotes, "&nbsp;");
   const scope = textOr(input.studentTask, "&nbsp;");
   const flowText =
     input.workshopFlow.length > 0 ? escapeHtml(input.workshopFlow.join(" > ")) : "<strong>Day 1:</strong> &nbsp;<br /><strong>Day 2:</strong> &nbsp;";
-  const submissionPrimary = input.submissionRequirements[0]
-    ? escapeHtml(input.submissionRequirements[0])
-    : "[Details]";
   const whatToDoItems = input.instructorPrepNotes
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, 3);
+    .filter(Boolean);
+  const whatToDoHtml =
+    whatToDoItems.length > 0
+      ? whatToDoItems.map((item, index) => `<p><strong>Step ${index + 1}:</strong> ${escapeHtml(item)}</p>`).join("\n  ")
+      : '<p><strong>Step 1:</strong> &nbsp;</p>\n  <p><strong>Step 2:</strong> &nbsp;</p>\n  <p><strong>Step 3:</strong> &nbsp;</p>';
+  const submissionHtml =
+    input.submissionRequirements.length > 0
+      ? input.submissionRequirements.map((item) => `<p style="font-size: 1.05em; margin: 0px; text-align: right;">${escapeHtml(item)}</p>`).join("\n  ")
+      : '<p style="font-size: 1.05em; margin: 0px; text-align: right;">[Details]</p>';
 
   return `
 <div style="max-width: 900px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #222;">
@@ -102,12 +62,10 @@ export function renderWorkshopTemplateV1(input: WorkshopInput) {
   <p style="margin: 0 0 10px 0;">${flowText}</p>
   <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
   <h3 style="color: #0e5a72; margin: 0 0 8px 0;"><img src="${BRAND_ASSETS.whatToDoIcon}" alt="What To Do icon" /> What To Do</h3>
-  <p><strong>Step 1:</strong> ${whatToDoItems[0] ? escapeHtml(whatToDoItems[0]) : "&nbsp;"}</p>
-  <p><strong>Step 2:</strong> ${whatToDoItems[1] ? escapeHtml(whatToDoItems[1]) : "&nbsp;"}</p>
-  <p><strong>Step 3:</strong> ${whatToDoItems[2] ? escapeHtml(whatToDoItems[2]) : "&nbsp;"}</p>
+  ${whatToDoHtml}
   <hr style="margin: 22px 0; border: none; border-top: 2px solid #0E5A72;" />
   <h3 style="color: #0e5a72; margin: 0px 0px 8px; text-align: right;"><img src="${BRAND_ASSETS.submissionIcon}" alt="Submission Details icon" /> Submission Details</h3>
-  <p style="font-size: 1.05em; margin: 0px; text-align: right;">${submissionPrimary}</p>
+  ${submissionHtml}
   <p style="text-align: center; margin-top: 20px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${BRAND_ASSETS.footerBanner}" alt="Machinists Institute Footer Banner" /></p>
 </div>`.trim();
 }

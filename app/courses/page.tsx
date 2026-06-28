@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
+import type { Prisma } from "@prisma/client";
+import { buildCourseBreadcrumbs, EditorBreadcrumbs } from "@/components/workshop-generator/EditorStatus";
 import { prisma } from "@/lib/db";
-import { emptyLabel, isHttpUrl } from "@/lib/format";
+import { emptyLabel } from "@/lib/format";
+import { ensureCourseWorkspaceTables } from "@/lib/workshop-generator/course-workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -9,13 +12,15 @@ type CourseSearchParams = Promise<Record<string, string | string[] | undefined>>
 
 async function getCourses(searchParams: Record<string, string | string[] | undefined>) {
   const query = stringParam(searchParams.q);
-  const status = stringParam(searchParams.status);
+  const program = stringParam(searchParams.program);
   const year = stringParam(searchParams.year);
   const quarter = stringParam(searchParams.quarter);
   const page = Math.max(1, Number(stringParam(searchParams.page) || "1"));
+  const sort = normalizeSort(stringParam(searchParams.sort));
+  const direction = normalizeDirection(stringParam(searchParams.direction));
   const pageSize = 50;
 
-  const where = {
+  const where: Prisma.CourseWhereInput = {
     ...(query
       ? {
           OR: [
@@ -25,30 +30,40 @@ async function getCourses(searchParams: Record<string, string | string[] | undef
           ]
         }
       : {}),
-    ...(status ? { developmentStatus: status } : {}),
+    ...(program ? { courseCode: { startsWith: program, mode: "insensitive" as const } } : {}),
     ...(year ? { year: Number(year) } : {}),
     ...(quarter ? { quarter: Number(quarter) } : {})
   };
 
-  const [total, items] = await Promise.all([
+  const [total, items, programOptions] = await Promise.all([
     prisma.course.count({ where }),
     prisma.course.findMany({
       where,
-      orderBy: [{ courseCode: "asc" }, { courseName: "asc" }],
+      orderBy: buildCourseOrderBy(sort, direction),
       skip: (page - 1) * pageSize,
       take: pageSize
-    })
+    }),
+    getProgramOptions()
   ]);
 
-  return { total, page, pageSize, items };
+  return { total, page, pageSize, items, programOptions, sort, direction };
 }
 
 export default async function CoursesPage({ searchParams }: { searchParams: CourseSearchParams }) {
   const params = await searchParams;
-  let data: Awaited<ReturnType<typeof getCourses>> = { total: 0, page: 1, pageSize: 50, items: [] };
+  let data: Awaited<ReturnType<typeof getCourses>> = {
+    total: 0,
+    page: 1,
+    pageSize: 50,
+    items: [],
+    programOptions: [],
+    sort: "courseCode",
+    direction: "asc"
+  };
   let error: string | null = null;
 
   try {
+    await ensureCourseWorkspaceTables(prisma);
     data = await getCourses(params);
   } catch (caught) {
     error = caught instanceof Error ? caught.message : "Database is not available.";
@@ -64,9 +79,8 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
     <>
       <header className="page-header">
         <div>
-          <div className="eyebrow">Course Catalog</div>
-          <h1>Search imported course reference data.</h1>
-          <p className="lede">Selecting a course opens locked imported fields and the workshop creation flow.</p>
+          <EditorBreadcrumbs items={buildCourseBreadcrumbs()} />
+          <h1>Course Catalog</h1>
         </div>
       </header>
 
@@ -77,8 +91,15 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
             <input id="q" name="q" defaultValue={stringParam(params.q)} placeholder="Course code, name, or description" />
           </div>
           <div className="field">
-            <label htmlFor="status">Development status</label>
-            <input id="status" name="status" defaultValue={stringParam(params.status)} placeholder="Ready, N/A, ..." />
+            <label htmlFor="program">Program</label>
+            <select id="program" name="program" defaultValue={stringParam(params.program)}>
+              <option value="">All programs</option>
+              {data.programOptions.map((program) => (
+                <option key={program.code} value={program.code}>
+                  {program.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field">
             <label htmlFor="year">Year</label>
@@ -91,7 +112,7 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
           <div className="button-row full">
             <button className="btn primary" type="submit">
               <Search size={18} />
-              Search Catalog
+              Apply Filters
             </button>
             <Link className="btn ghost" href="/courses">
               Clear
@@ -103,9 +124,8 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
       <section className="panel">
         <div className="panel-header">
           <div>
-            <div className="eyebrow">Results</div>
             <h2>{data.total} courses</h2>
-            <p className="lede">
+            <p className="inline-notice">
               Showing {from}-{to} of {data.total}
             </p>
           </div>
@@ -121,47 +141,49 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
             <table>
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Hours</th>
-                  <th>Year</th>
-                  <th>Qtr</th>
-                  <th>Status</th>
-                  <th>Links</th>
+                  <th>{renderSortLink("Code", "courseCode", params, data.sort, data.direction)}</th>
+                  <th>{renderSortLink("Name", "courseName", params, data.sort, data.direction)}</th>
+                  <th>{renderSortLink("Description", "description", params, data.sort, data.direction)}</th>
+                  <th>{renderSortLink("Hours", "hours", params, data.sort, data.direction)}</th>
+                  <th>{renderSortLink("Year", "year", params, data.sort, data.direction)}</th>
+                  <th>{renderSortLink("Quarter", "quarter", params, data.sort, data.direction)}</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody>
                 {data.items.map((course) => (
                   <tr key={course.id}>
-                    <td>{emptyLabel(course.courseCode)}</td>
                     <td>
-                      <Link href={`/courses/${course.id}`}>{course.courseName}</Link>
+                      <Link className="catalog-row-link" href={courseWorkspaceHref(course)}>
+                        {emptyLabel(course.courseCode)}
+                      </Link>
                     </td>
-                    <td>{truncate(course.description, 160)}</td>
-                    <td>{emptyLabel(course.hours)}</td>
-                    <td>{emptyLabel(course.year)}</td>
-                    <td>{emptyLabel(course.quarter)}</td>
-                    <td>{emptyLabel(course.developmentStatus)}</td>
                     <td>
-                      <div className="button-row">
-                        {isHttpUrl(course.syllabusUrl) ? (
-                          <a href={course.syllabusUrl} target="_blank" rel="noreferrer">
-                            Syllabus
-                          </a>
-                        ) : null}
-                        {isHttpUrl(course.canvasShellUrl) ? (
-                          <a href={course.canvasShellUrl} target="_blank" rel="noreferrer">
-                            Canvas
-                          </a>
-                        ) : null}
-                        {isHttpUrl(course.enrollmentTrackerUrl) ? (
-                          <a href={course.enrollmentTrackerUrl} target="_blank" rel="noreferrer">
-                            Enrollment
-                          </a>
-                        ) : null}
-                      </div>
+                      <Link className="catalog-row-link" href={courseWorkspaceHref(course)}>
+                        {course.courseName}
+                      </Link>
                     </td>
+                    <td>
+                      <Link className="catalog-row-link" href={courseWorkspaceHref(course)}>
+                        {truncate(course.description, 160)}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="catalog-row-link" href={courseWorkspaceHref(course)}>
+                        {emptyLabel(course.hours)}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="catalog-row-link" href={courseWorkspaceHref(course)}>
+                        {emptyLabel(course.year)}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="catalog-row-link" href={courseWorkspaceHref(course)}>
+                        {emptyLabel(course.quarter)}
+                      </Link>
+                    </td>
+                    <td>{renderCourseActions(course)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -194,9 +216,121 @@ function stringParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
+const sortableColumns = [
+  "courseCode",
+  "courseName",
+  "description",
+  "hours",
+  "year",
+  "quarter"
+] as const;
+
+type SortableColumn = (typeof sortableColumns)[number];
+type SortDirection = "asc" | "desc";
+
+function normalizeSort(value: string): SortableColumn {
+  return sortableColumns.includes(value as SortableColumn) ? (value as SortableColumn) : "courseCode";
+}
+
+function normalizeDirection(value: string): SortDirection {
+  return value === "desc" ? "desc" : "asc";
+}
+
+function buildCourseOrderBy(sort: SortableColumn, direction: SortDirection): Prisma.CourseOrderByWithRelationInput[] {
+  if (sort === "courseName") {
+    return [{ courseName: direction }, { courseCode: { sort: "asc", nulls: "last" } }];
+  }
+
+  return [{ [sort]: { sort: direction, nulls: "last" } }, { courseName: "asc" }];
+}
+
+const programNames: Record<string, string> = {
+  BASC: "Basic Academic Skills",
+  BERT: "Boeing Employee Req. Transfer",
+  BPET: "Boeing Pre-Employment Training",
+  BRAP: "Boeing Registered Apprenticeship",
+  CAMP: "Bootcamps",
+  DEMO: "Demo Courses",
+  FLMA: "Flightline Mechanic",
+  FWAP: "Fabrication Welder",
+  HDEM: "Heavy Duty Equipment",
+  HEID: "Heidenhain North America",
+  IMTA: "Industrial Maintenance",
+  INCW: "Incumbent Worker Training",
+  MACH: "Machinist",
+  MICA: "MI Career Accelerator",
+  MIYA: "MI Youth Academy",
+  MOAP: "Machine Operator",
+  MTAP: "Mechatronics Tech",
+  MWRK: "Missouri Works Initiative",
+  OSHA: "OSHA10 General",
+  PDEV: "Personal Development",
+  SBOX: "Sandbox Testing Environments",
+  TCVM: "Trailer, Container, Van",
+  TRIB: "Tribal Trainings"
+};
+
+async function getProgramOptions() {
+  const courses = await prisma.course.findMany({
+    select: { courseCode: true },
+    orderBy: { courseCode: "asc" }
+  });
+  const programs = new Set<string>();
+
+  courses.forEach((course) => {
+    const program = programFromCourseCode(course.courseCode);
+    if (program) programs.add(program);
+  });
+
+  return Array.from(programs)
+    .sort((a, b) => a.localeCompare(b))
+    .map((code) => ({
+      code,
+      label: programNames[code] ? `${code} - ${programNames[code]}` : code
+    }));
+}
+
+function programFromCourseCode(courseCode: string | null) {
+  return courseCode?.trim().match(/^[A-Za-z]+/)?.[0]?.toUpperCase() ?? null;
+}
+
+function renderSortLink(
+  label: string,
+  column: SortableColumn,
+  params: Record<string, string | string[] | undefined>,
+  activeSort: SortableColumn,
+  activeDirection: SortDirection
+) {
+  const active = activeSort === column;
+  const nextDirection: SortDirection = active && activeDirection === "asc" ? "desc" : "asc";
+
+  return (
+    <Link className={`table-sort ${active ? "active" : ""}`} href={buildSortLink(params, column, nextDirection)}>
+      <span>{label}</span>
+      {active ? <span aria-label={`Sorted ${activeDirection}`}>{activeDirection === "asc" ? "↑" : "↓"}</span> : null}
+    </Link>
+  );
+}
+
 function truncate(value: string | null, length: number) {
   if (!value) return "Not provided";
   return value.length > length ? `${value.slice(0, length)}...` : value;
+}
+
+type CatalogCourse = Awaited<ReturnType<typeof getCourses>>["items"][number];
+
+function courseWorkspaceHref(course: CatalogCourse) {
+  return `/courses/${course.id}`;
+}
+
+function renderCourseActions(course: CatalogCourse) {
+  return (
+    <div className="button-row">
+      <Link className="btn primary" href={`/courses/${course.id}`}>
+        View Details
+      </Link>
+    </div>
+  );
 }
 
 function buildPageLink(params: Record<string, string | string[] | undefined>, page: number) {
@@ -207,5 +341,17 @@ function buildPageLink(params: Record<string, string | string[] | undefined>, pa
     query.set(key, serialized);
   }
   query.set("page", String(page));
+  return `/courses?${query.toString()}`;
+}
+
+function buildSortLink(params: Record<string, string | string[] | undefined>, sort: SortableColumn, direction: SortDirection) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    const serialized = Array.isArray(value) ? value[0] : value;
+    if (!serialized || key === "page" || key === "sort" || key === "direction") continue;
+    query.set(key, serialized);
+  }
+  query.set("sort", sort);
+  query.set("direction", direction);
   return `/courses?${query.toString()}`;
 }

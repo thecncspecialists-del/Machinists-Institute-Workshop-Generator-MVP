@@ -4,6 +4,7 @@ import { z } from "zod";
 import { assetStatuses } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { logBackendError, logBackendEvent } from "@/lib/logger";
+import { requireStaffUser } from "@/lib/require-staff-user";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,11 @@ const updateAssetSchema = z.object({
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const authResult = await requireStaffUser();
+  if (authResult.response) {
+    return authResult.response;
+  }
+
   try {
     const { id } = paramsSchema.parse(await params);
     const payload = updateAssetSchema.parse(await request.json());

@@ -1,6 +1,6 @@
-# Machinists Institute Workshop Generator
+# Machinists Institute Canvas Asset Builder
 
-An instructor and curriculum designer tool that generates standardized Canvas-ready workshop HTML from structured workshop information.
+An internal curriculum tool for importing course reference data and generating standardized Canvas-ready instructional assets from structured staff input.
 
 ## Start Here
 
@@ -11,17 +11,19 @@ An instructor and curriculum designer tool that generates standardized Canvas-re
 ## Operating Model
 
 1. This is an internal staff-facing tool.
-2. Primary workflow is generate -> preview -> copy HTML -> paste into Canvas manually.
-3. Saving to Workshop Commons is optional and stores structured inputs for reuse.
-4. Reuse existing infrastructure assets before creating anything new.
+2. Canvas remains the system of record for student-facing content.
+3. Primary asset workflow is generate -> preview -> copy HTML -> paste into Canvas manually.
+4. Course Catalog is the entry point for imported course reference data.
+5. Course Workspace keeps the selected course active while workshops and units are built.
 
 ## Core Features
 
-1. Single-page Workshop Generator (`/workshop-generator`)
-2. Live Canvas-style preview
-3. One-click copy of generated HTML
-4. Save structured workshop input to commons
-5. Search and reopen saved workshops
+1. Course Catalog (`/courses`)
+2. Course Workspace (`/workshop-generator/course-workspace`)
+3. Workshop Builder (`/workshop-generator`)
+4. Live Canvas-style preview
+5. One-click copy of generated HTML
+6. Authenticated course import and workshop APIs
 
 ## Stack Alignment
 
@@ -29,6 +31,7 @@ An instructor and curriculum designer tool that generates standardized Canvas-re
 2. Prisma + PostgreSQL
 3. Auth.js credentials login
 4. Existing platform-style API mutation guard and action history logging
+5. Canvas-first reference strategy with local structured recipes, not bulk document storage
 
 ## Local Development
 
@@ -76,13 +79,13 @@ Optional:
 2. `ADMIN_PASSWORD`
 3. `APP_DEFAULT_CONTRIBUTOR`
 
-## MVP Constraints
+## Current Constraints
 
-1. No Course table dependency for generator workflow.
-2. No Term table dependency for generator workflow.
-3. No Canvas API publishing in MVP.
-4. No rich text editor in MVP.
-5. No student-facing routes.
+1. No Canvas API publishing yet.
+2. No automatic Canvas publishing yet.
+3. No rich text editor yet.
+4. No student-facing routes.
+5. No local long-term PDF or full HTML history storage.
 
 ## Template Note
 

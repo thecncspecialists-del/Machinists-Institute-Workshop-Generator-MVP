@@ -10,7 +10,7 @@ Use it when you need to:
 
 1. Create a new workshop quickly.
 2. Keep workshop page structure consistent.
-3. Reuse a workshop saved by another instructor.
+3. Build inside an imported course workspace.
 
 ## Create a new workshop
 
@@ -35,9 +35,9 @@ The preview is read-only. Use the form to make edits.
 
 If copy fails, use the HTML panel to manually copy.
 
-## Save to Workshop Commons
+## Save the workshop
 
-1. Click `Save to Workshop Commons`.
+1. Click `Save to Workspace`.
 2. Keep `Save as new copy` enabled unless you are intentionally updating an existing record.
 3. Continue working after save if needed.
 
@@ -47,15 +47,15 @@ Saving requires:
 2. Course
 3. Term
 
-## Find a saved workshop
+## Reopen a course workspace
 
-1. Use the Workshop Commons search panel.
-2. Search by title, course, term, tags, or summary text.
-3. Click a result to reopen it.
+1. Open the Course Catalog.
+2. Find the course.
+3. Click `Open Workspace`.
 
 ## Use a saved workshop as a starting point
 
-1. Open a workshop from commons.
+1. Open the course workspace from the Course Catalog.
 2. Make your edits in the form.
 3. Copy updated HTML.
 4. Save as a new copy to keep both versions.
@@ -64,20 +64,20 @@ Saving requires:
 
 Use:
 
-1. `SPYYYY` (Spring)
-2. `SUYYYY` (Summer)
-3. `FAYYYY` (Fall)
-4. `WIYYYY` (Winter)
+1. `SPYY` (Spring)
+2. `SUYY` (Summer)
+3. `FAYY` (Fall)
+4. `WIYY` (Winter)
 
 Examples:
 
-1. `SP2026`
-2. `FA2026`
+1. `SP26`
+2. `FA26`
 
 ## What to do if something looks wrong
 
 1. Refresh the page once.
-2. Reopen the workshop from commons and try again.
+2. Reopen the course workspace from the Course Catalog and try again.
 3. If the issue continues, send:
    - screenshot
    - workshop title

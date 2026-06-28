@@ -13,7 +13,8 @@ items as release blockers before exposing it to a broader audience.
 
 ## Access and Secrets
 
-- Add authentication and role-aware authorization before network deployment.
+- Keep all generation, import, and asset APIs behind staff authentication.
+- Add role-aware authorization before enabling future Canvas API publishing.
 - Store `DATABASE_URL` and `OPENAI_API_KEY` in the deployment platform secret
   manager, not in committed files.
 - Rotate `OPENAI_API_KEY` when moving between local, staging, and production.
@@ -27,5 +28,5 @@ items as release blockers before exposing it to a broader audience.
 
 ## Integrations
 
-- Keep Canvas and external system publishing manual until a scoped integration
+- Keep Canvas publishing and SIS import submission manual until a scoped integration
   has explicit approval, audit logging, and rollback behavior.

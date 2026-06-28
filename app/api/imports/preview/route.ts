@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { parseCourseCatalog } from "@/lib/importParser";
 import { logBackendError, logBackendEvent } from "@/lib/logger";
+import { requireStaffUser } from "@/lib/require-staff-user";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,11 @@ export const runtime = "nodejs";
  * a user explicitly confirms the batch.
  */
 export async function POST(request: Request) {
+  const authResult = await requireStaffUser();
+  if (authResult.response) {
+    return authResult.response;
+  }
+
   try {
     logBackendEvent("import_started", { mode: "preview" });
     const formData = await request.formData();

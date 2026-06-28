@@ -100,8 +100,7 @@ export function ImportCatalogClient({ defaultContributor }: { defaultContributor
       <section className="panel">
         <div className="panel-header">
           <div>
-            <div className="eyebrow">Import Course Catalog</div>
-            <h1>Upload spreadsheet reference data.</h1>
+            <h1 className="page-title-compact">Import Catalog</h1>
           </div>
           <UploadCloud size={28} />
         </div>
@@ -187,7 +186,7 @@ export function ImportCatalogClient({ defaultContributor }: { defaultContributor
             <div className="panel-header">
               <div>
                 <div className="eyebrow">Column Mapping</div>
-                <h2>Map spreadsheet columns to locked course fields</h2>
+                <h2>Column Mapping</h2>
               </div>
             </div>
             <div className="form-grid">

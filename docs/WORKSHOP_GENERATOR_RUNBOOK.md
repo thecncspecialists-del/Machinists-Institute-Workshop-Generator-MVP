@@ -4,7 +4,7 @@
 
 This runbook supports technical operations for the Machinists Institute Workshop Generator.
 
-This app is an internal staff-facing tool used to generate standardized Canvas-ready workshop HTML and optionally save structured workshop records to a shared commons.
+This app is an internal staff-facing tool used to import course reference data, open a course workspace, and generate standardized Canvas-ready workshop HTML.
 
 ## Architecture summary
 
@@ -18,7 +18,7 @@ Primary stack:
 Core functional areas:
 
 1. Workshop Generator UI (`/workshop-generator`)
-2. Workshop Commons search and reopen flow (`/workshop-generator/commons`)
+2. Course Catalog and Course Workspace (`/courses`, `/workshop-generator/course-workspace`)
 3. Workshop API endpoints (`/api/workshops`, `/api/workshops/[id]`)
 
 ## Environment variables
@@ -71,7 +71,7 @@ Standard release flow:
    - generate preview
    - copy HTML
    - save workshop
-   - search and reopen workshop
+   - reopen workspace from the course catalog
 
 ## Rollback
 

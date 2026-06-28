@@ -3,8 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Machinists Institute Workshop Generator",
-  description: "Generate standardized Canvas-ready workshop HTML from structured instructor input."
+  title: "Machinists Institute Canvas Asset Builder",
+  description: "Create standardized Canvas-ready curriculum assets from structured instructor input."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

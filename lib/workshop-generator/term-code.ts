@@ -1,4 +1,4 @@
-const TERM_CODE_REGEX = /^(SP|SU|FA|WI)\d{4}$/;
+const TERM_CODE_REGEX = /^(SP|SU|FA|WI)\d{2}$/;
 
 export const TERM_SEQUENCE = ["SP", "SU", "FA", "WI"] as const;
 
@@ -11,5 +11,5 @@ export function isValidTermCode(value: string) {
 }
 
 export function termCodeHelperText() {
-  return "Use SP, SU, FA, or WI plus year (example: SP2026).";
+  return "Use SP, SU, FA, or WI plus two-digit year (examples: SP26, SU26, FA26, WI27).";
 }

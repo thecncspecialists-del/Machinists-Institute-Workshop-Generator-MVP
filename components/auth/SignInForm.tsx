@@ -17,7 +17,7 @@ export function SignInForm() {
       email,
       password,
       redirect: false,
-      callbackUrl: "/workshop-generator"
+      callbackUrl: "/courses"
     });
 
     if (result?.error) {
@@ -26,7 +26,7 @@ export function SignInForm() {
       return;
     }
 
-    window.location.assign("/workshop-generator");
+    window.location.assign("/courses");
   }
 
   return (
@@ -35,7 +35,6 @@ export function SignInForm() {
         void handleSubmit(formData);
       }}
       className="panel sign-in-panel"
-      style={{ maxWidth: 420 }}
     >
       <div className="field">
         <label htmlFor="email">Email</label>

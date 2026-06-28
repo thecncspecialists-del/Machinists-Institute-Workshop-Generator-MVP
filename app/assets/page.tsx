@@ -29,9 +29,7 @@ export default async function AssetLibraryPage({ searchParams }: { searchParams:
     <>
       <header className="page-header">
         <div>
-          <div className="eyebrow">Asset Library</div>
-          <h1>Review saved curriculum drafts.</h1>
-          <p className="lede">Saved assets stay local and move through simple status labels.</p>
+          <h1>Assets</h1>
         </div>
       </header>
 
@@ -86,7 +84,6 @@ export default async function AssetLibraryPage({ searchParams }: { searchParams:
       <section className="panel">
         <div className="panel-header">
           <div>
-            <div className="eyebrow">Saved Assets</div>
             <h2>{assets.length} results</h2>
           </div>
         </div>

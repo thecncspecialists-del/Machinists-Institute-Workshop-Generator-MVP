@@ -9,7 +9,7 @@ The application has been reoriented into a generator-first, staff-authenticated 
 3. API mutation guard pattern with idempotency and rate limiting
 4. Structured workshop input as source of truth
 5. Canvas-ready HTML generation and copy
-6. Optional save/search/reopen commons
+6. Course catalog to workspace to workshop builder workflow
 
 This keeps MVP maintenance-light while preserving a reusable architecture for future internal apps.
 
@@ -27,9 +27,13 @@ Machinists Institute Workshop Generator (Next.js App Router)
         |     |-- HTML generator utility
         |     |-- Copy HTML action
         |
-        |-- /workshop-generator/commons
-        |     |-- Search workshops
-        |     |-- Open workshop back into generator
+        |-- /courses
+        |     |-- Imported course search and filtering
+        |     |-- Open or create course workspace
+        |
+        |-- /workshop-generator/course-workspace
+        |     |-- Active course workspace
+        |     |-- Append workshops and units
         |
         |-- /api/workshops, /api/workshops/[id]
         |     |-- Auth/session checks
@@ -49,7 +53,7 @@ Canvas LMS (manual paste of copied HTML)
 Implemented structure:
 
 1. `app/workshop-generator/page.tsx`
-2. `app/workshop-generator/commons/page.tsx`
+2. `app/workshop-generator/course-workspace/page.tsx`
 3. `app/workshop-generator/actions.ts`
 4. `app/api/workshops/route.ts`
 5. `app/api/workshops/[id]/route.ts`
@@ -123,8 +127,8 @@ Aligned to existing platform flow:
 
 Phase 1: architecture alignment  
 Phase 2: generator MVP (form, preview, copy)  
-Phase 3: save to commons  
-Phase 4: commons search and reopen  
+Phase 3: save to workspace  
+Phase 4: course catalog reopen flow  
 Phase 5: docs and handoff  
 Phase 6: production readiness validation
 
@@ -142,9 +146,8 @@ Implemented starter files include:
 8. `components/workshop-generator/WorkshopPreview.tsx`
 9. `components/workshop-generator/CopyHtmlButton.tsx`
 10. `components/workshop-generator/SaveWorkshopDialog.tsx`
-11. `components/workshop-generator/WorkshopCommonsSearch.tsx`
-12. `app/workshop-generator/page.tsx`
-13. `app/workshop-generator/actions.ts`
+11. `app/workshop-generator/page.tsx`
+12. `app/workshop-generator/actions.ts`
 
 ## Existing assets registry template
 
@@ -155,7 +158,7 @@ See:
 ## Risks and mitigations
 
 1. Risk: scope creep into full curriculum platform  
-   Mitigation: keep UI focused on generator + optional commons.
+   Mitigation: keep UI focused on catalog, workspace, and builder.
 
 2. Risk: term/course stewardship burden  
    Mitigation: text fields + term format validation only.
@@ -179,7 +182,7 @@ See:
 Day 1: environment alignment and auth validation  
 Day 2: workshop template tuning with SMEs  
 Day 3: term/course entry QA and copy flow validation  
-Day 4: commons save/search behavior review  
+Day 4: course workspace reopen behavior review  
 Day 5: production dry run and smoke checks  
 Day 6: instructor pilot and feedback pass  
 Day 7: handoff closeout and release decision

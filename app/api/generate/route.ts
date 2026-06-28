@@ -4,6 +4,7 @@ import { buildAssetPrompt } from "@/lib/aiBrain";
 import { activeAssetTypes } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { logBackendError, logBackendEvent } from "@/lib/logger";
+import { requireStaffUser } from "@/lib/require-staff-user";
 import { renderStructuredAsset, validateAssetOutput } from "@/lib/renderAsset";
 
 export const runtime = "nodejs";
@@ -24,6 +25,11 @@ const generateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const authResult = await requireStaffUser();
+  if (authResult.response) {
+    return authResult.response;
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     logBackendEvent("ai_generation_failed", { reason: "missing_openai_api_key" });

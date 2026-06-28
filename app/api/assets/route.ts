@@ -5,6 +5,7 @@ import { assetStatuses, assetTypes } from "@/lib/constants";
 import { createAssetSnapshot } from "@/lib/assetRepository";
 import { prisma } from "@/lib/db";
 import { logBackendError } from "@/lib/logger";
+import { requireStaffUser } from "@/lib/require-staff-user";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,11 @@ const createAssetSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  const authResult = await requireStaffUser();
+  if (authResult.response) {
+    return authResult.response;
+  }
+
   const url = new URL(request.url);
   const courseId = url.searchParams.get("courseId");
   const assetType = url.searchParams.get("assetType");
@@ -57,6 +63,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const authResult = await requireStaffUser();
+  if (authResult.response) {
+    return authResult.response;
+  }
+
   try {
     const payload = createAssetSchema.parse(await request.json());
     const createdBy = payload.createdBy?.trim() || process.env.APP_DEFAULT_CONTRIBUTOR || "Curriculum Community";

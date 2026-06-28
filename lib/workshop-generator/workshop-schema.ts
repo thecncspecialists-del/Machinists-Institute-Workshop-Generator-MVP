@@ -9,7 +9,9 @@ export const workshopInputSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .refine((value) => isValidTermCode(value), "Term must use SP/SU/FA/WI format, for example SP2026."),
+    .refine((value) => value.length === 0 || isValidTermCode(value), "Term must use SP/SU/FA/WI plus two-digit year, for example SP26.")
+    .optional()
+    .default(""),
   overview: z.string().trim().min(1, "Overview is required."),
   objectives: z.array(z.string().trim()).default([]),
   studentTask: z.string().trim().min(1, "Student task is required."),
@@ -28,8 +30,7 @@ export const workshopInputSchema = z.object({
 
 export const saveWorkshopSchema = workshopInputSchema.pick({
   title: true,
-  courseLabel: true,
-  termCode: true
+  courseLabel: true
 });
 
 export type WorkshopInput = z.infer<typeof workshopInputSchema>;

@@ -1,7 +1,7 @@
 import type { WorkshopInput } from "@/lib/workshop-generator/workshop-schema";
 
 export const DEFAULT_WORKSHOP_INPUT: WorkshopInput = {
-  title: "",
+  title: "Workshop 1",
   courseLabel: "",
   termCode: "",
   overview: "",

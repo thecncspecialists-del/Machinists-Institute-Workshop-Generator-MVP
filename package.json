@@ -12,7 +12,8 @@
     "db:init": "node scripts/init-db.mjs",
     "db:migrate:deploy": "prisma migrate deploy",
     "user:create-admin": "node scripts/user-create-admin.mjs",
-    "user:reset-password": "node scripts/user-reset-password.mjs"
+    "user:reset-password": "node scripts/user-reset-password.mjs",
+    "user:provision-instructors": "node scripts/user-provision-instructors.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

@@ -7,13 +7,15 @@ import { recordIdempotentMutationResult, runApiMutationGuard } from "@/lib/api-m
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
 import { normalizeWorkshopInput } from "@/lib/workshop-generator/normalize-workshop-input";
-import { buildWorkshopSearchWhere } from "@/lib/workshop-generator/search-workshops";
+import { ensureCourseWorkspaceTables } from "@/lib/workshop-generator/course-workspaces";
+import { buildVisibleWorkshopWhere, buildWorkshopSearchWhere } from "@/lib/workshop-generator/search-workshops";
 import { workshopInputSchema } from "@/lib/workshop-generator/workshop-schema";
 
 export const runtime = "nodejs";
 
 const saveWorkshopRequestSchema = z.object({
   workshop: workshopInputSchema,
+  courseWorkspaceId: z.string().uuid().optional().nullable(),
   sourceWorkshopId: z.string().uuid().optional().nullable(),
   saveAsCopy: z.boolean().default(true),
   visibility: z.nativeEnum(WorkshopVisibility).optional().default(WorkshopVisibility.STAFF_COMMONS)
@@ -32,12 +34,14 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const query = parseStringParam(url, "q");
   const course = parseStringParam(url, "course");
+  const courseWorkspaceId = parseStringParam(url, "courseWorkspaceId");
   const term = parseStringParam(url, "term");
   const limit = Number(url.searchParams.get("limit") ?? 50);
   const take = Number.isFinite(limit) ? Math.max(1, Math.min(100, limit)) : 50;
 
   const where: Prisma.WorkshopWhereInput = {
-    archivedAt: null,
+    ...buildVisibleWorkshopWhere(),
+    ...(courseWorkspaceId ? { courseWorkspaceId } : {}),
     ...(course ? { courseLabel: { contains: course, mode: "insensitive" } } : {}),
     ...(term ? { termCode: { contains: term.toUpperCase(), mode: "insensitive" } } : {}),
     ...buildWorkshopSearchWhere(query)
@@ -52,6 +56,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     workshops: workshops.map((workshop) => ({
       id: workshop.id,
+      courseWorkspaceId: workshop.courseWorkspaceId,
       title: workshop.title,
       courseLabel: workshop.courseLabel,
       termCode: workshop.termCode,
@@ -90,6 +95,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await ensureCourseWorkspaceTables(prisma);
     const payload = saveWorkshopRequestSchema.parse(await request.json());
     const normalizedWorkshop = normalizeWorkshopInput(payload.workshop);
     const summary = normalizedWorkshop.overview.slice(0, 300) || null;
@@ -98,10 +104,24 @@ export async function POST(request: Request) {
     const shouldOverwrite =
       Boolean(payload.sourceWorkshopId) && !payload.saveAsCopy && authResult.user.role === Role.ADMIN;
 
-    const existing = shouldOverwrite
+    const sourceWorkshop = payload.sourceWorkshopId
       ? await prisma.workshop.findUnique({
           where: { id: payload.sourceWorkshopId ?? "" }
         })
+      : null;
+    const courseWorkspaceId = payload.courseWorkspaceId ?? sourceWorkshop?.courseWorkspaceId ?? null;
+    if (!courseWorkspaceId) {
+      return NextResponse.json({ error: "Save or open a class before creating workshops." }, { status: 400 });
+    }
+    const courseWorkspace = await prisma.courseWorkspace.findFirst({
+      where: { id: courseWorkspaceId, archivedAt: null }
+    });
+    if (!courseWorkspace) {
+      return NextResponse.json({ error: "Class not found." }, { status: 404 });
+    }
+
+    const existing = shouldOverwrite
+      ? sourceWorkshop
       : null;
 
     let savedWorkshop;
@@ -110,6 +130,7 @@ export async function POST(request: Request) {
         where: { id: existing.id },
         data: {
           title: normalizedWorkshop.title,
+          courseWorkspaceId,
           courseLabel: normalizedWorkshop.courseLabel,
           termCode: normalizedWorkshop.termCode,
           summary,
@@ -123,6 +144,7 @@ export async function POST(request: Request) {
       savedWorkshop = await prisma.workshop.create({
         data: {
           title: normalizedWorkshop.title,
+          courseWorkspaceId,
           courseLabel: normalizedWorkshop.courseLabel,
           termCode: normalizedWorkshop.termCode,
           summary,
@@ -147,13 +169,15 @@ export async function POST(request: Request) {
       metadata: {
         saveAsCopy: payload.saveAsCopy,
         termCode: normalizedWorkshop.termCode,
-        courseLabel: normalizedWorkshop.courseLabel
+        courseLabel: normalizedWorkshop.courseLabel,
+        courseWorkspaceId
       }
     });
 
     const responsePayload = {
       workshop: {
         id: savedWorkshop.id,
+        courseWorkspaceId: savedWorkshop.courseWorkspaceId,
         title: savedWorkshop.title,
         courseLabel: savedWorkshop.courseLabel,
         termCode: savedWorkshop.termCode,

@@ -62,6 +62,7 @@ model Course {
   outcomes          CourseOutcome[]
   assets            CurriculumAsset[]
   assetContextLinks AssetContextLink[]
+  workspaces        CourseWorkspace[]
 
   @@index([courseCode])
   @@index([courseName])
@@ -151,7 +152,10 @@ model User {
   createdAt        DateTime       @default(now()) @map("created_at")
   updatedAt        DateTime       @updatedAt @map("updated_at")
   workshopsCreated Workshop[]     @relation("WorkshopCreator")
+  courseWorkspacesCreated CourseWorkspace[] @relation("CourseWorkspaceCreator")
   actionHistory    ActionHistory[] @relation("ActorActionHistory")
+  debugIssuesReported DebugIssue[] @relation("DebugIssueReporter")
+  debugIssuesResolved DebugIssue[] @relation("DebugIssueResolver")
   accounts         Account[]
   sessions         Session[]
 
@@ -184,8 +188,63 @@ enum WorkshopVisibility {
   STAFF_COMMONS
 }
 
+enum DebugIssueStatus {
+  OPEN
+  IN_PROGRESS
+  FIXED
+}
+
+model DebugIssue {
+  id             String           @id @default(uuid()) @db.Uuid
+  title          String
+  description    String
+  pageUrl        String?          @map("page_url")
+  status         DebugIssueStatus @default(OPEN)
+  adminResponse  String?          @map("admin_response")
+  reporterUserId String?          @map("reporter_user_id")
+  reporterName   String?          @map("reporter_name")
+  reporterEmail  String?          @map("reporter_email")
+  resolvedById   String?          @map("resolved_by_id")
+  resolvedByName String?          @map("resolved_by_name")
+  resolvedAt     DateTime?        @map("resolved_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  reporter       User?            @relation("DebugIssueReporter", fields: [reporterUserId], references: [id], onDelete: SetNull)
+  resolver       User?            @relation("DebugIssueResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([reporterUserId, createdAt])
+  @@index([updatedAt])
+  @@map("debug_issues")
+}
+
+model CourseWorkspace {
+  id                  String             @id @default(uuid()) @db.Uuid
+  courseId            String             @map("course_id") @db.Uuid
+  title               String
+  summary             String?
+  homePageInputJson   Json               @map("home_page_input_json")
+  homePageHtml        String             @map("home_page_html")
+  imagePackageVersion String             @default("mi-canvas-image-package-v1") @map("image_package_version")
+  visibility          WorkshopVisibility @default(STAFF_COMMONS)
+  createdById         String?            @map("created_by_id")
+  createdByName       String?            @map("created_by_name")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  archivedAt          DateTime?          @map("archived_at")
+  course              Course             @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  creator             User?              @relation("CourseWorkspaceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  workshops           Workshop[]
+
+  @@index([courseId])
+  @@index([title])
+  @@index([updatedAt])
+  @@map("course_workspaces")
+}
+
 model Workshop {
   id              String             @id @default(uuid()) @db.Uuid
+  courseWorkspaceId String?           @map("course_workspace_id") @db.Uuid
   title           String
   courseLabel     String             @map("course_label")
   termCode        String             @map("term_code")
@@ -200,12 +259,32 @@ model Workshop {
   updatedAt       DateTime           @updatedAt @map("updated_at")
   archivedAt      DateTime?          @map("archived_at")
   creator         User?              @relation("WorkshopCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  courseWorkspace CourseWorkspace?    @relation(fields: [courseWorkspaceId], references: [id], onDelete: SetNull)
+  units           WorkshopUnit[]
 
+  @@index([courseWorkspaceId])
   @@index([courseLabel])
   @@index([termCode])
   @@index([title])
   @@index([createdAt])
   @@map("workshops")
+}
+
+model WorkshopUnit {
+  id         String   @id @default(uuid()) @db.Uuid
+  workshopId String   @map("workshop_id") @db.Uuid
+  unitNumber Int      @map("unit_number")
+  title      String
+  inputJson  Json     @map("input_json")
+  htmlOutput String   @map("html_output")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  workshop   Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+
+  @@unique([workshopId, unitNumber])
+  @@index([workshopId])
+  @@index([updatedAt])
+  @@map("workshop_units")
 }
 
 model Account {
