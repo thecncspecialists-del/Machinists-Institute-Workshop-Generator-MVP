@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import type { Prisma } from "@prisma/client";
+import { DebugIssueNotificationPane } from "@/components/debug/DebugIssueNotificationPane";
 import { buildCourseBreadcrumbs, EditorBreadcrumbs } from "@/components/workshop-generator/EditorStatus";
 import { prisma } from "@/lib/db";
 import { emptyLabel } from "@/lib/format";
@@ -81,6 +82,8 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
           <h1>Course Catalog</h1>
         </div>
       </header>
+
+      <DebugIssueNotificationPane />
 
       <section className="panel">
         <form className="form-grid">

@@ -32,33 +32,33 @@ model CourseImportBatch {
 }
 
 model Course {
-  id                   String   @id @default(uuid()) @db.Uuid
-  sourceImportBatchId  String   @map("source_import_batch_id") @db.Uuid
-  externalSource       String   @map("external_source")
-  externalId           String?  @map("external_id")
-  courseCode           String?  @map("course_code")
-  courseName           String   @map("course_name")
+  id                   String    @id @default(uuid()) @db.Uuid
+  sourceImportBatchId  String    @map("source_import_batch_id") @db.Uuid
+  externalSource       String    @map("external_source")
+  externalId           String?   @map("external_id")
+  courseCode           String?   @map("course_code")
+  courseName           String    @map("course_name")
   description          String?
   hours                Float?
   year                 Int?
   quarter              Int?
-  syllabusUrl          String?  @map("syllabus_url")
-  canvasShellUrl       String?  @map("canvas_shell_url")
-  physicalInventoryUrl String?  @map("physical_inventory_url")
-  curriculumUrl        String?  @map("curriculum_url")
-  certsUrl             String?  @map("certs_url")
-  amatrolUrl           String?  @map("amatrol_url")
-  toolingUUrl          String?  @map("tooling_u_url")
-  electudeUrl          String?  @map("electude_url")
-  developmentStatus    String?  @map("development_status")
+  syllabusUrl          String?   @map("syllabus_url")
+  canvasShellUrl       String?   @map("canvas_shell_url")
+  physicalInventoryUrl String?   @map("physical_inventory_url")
+  curriculumUrl        String?   @map("curriculum_url")
+  certsUrl             String?   @map("certs_url")
+  amatrolUrl           String?   @map("amatrol_url")
+  toolingUUrl          String?   @map("tooling_u_url")
+  electudeUrl          String?   @map("electude_url")
+  developmentStatus    String?   @map("development_status")
   timelineStart        DateTime? @map("timeline_start")
   timelineEnd          DateTime? @map("timeline_end")
-  enrollmentTrackerUrl String?  @map("enrollment_tracker_url")
-  rawImportJson        Json     @map("raw_import_json")
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  enrollmentTrackerUrl String?   @map("enrollment_tracker_url")
+  rawImportJson        Json      @map("raw_import_json")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  sourceImportBatch CourseImportBatch @relation(fields: [sourceImportBatchId], references: [id], onDelete: Restrict)
+  sourceImportBatch CourseImportBatch  @relation(fields: [sourceImportBatchId], references: [id], onDelete: Restrict)
   outcomes          CourseOutcome[]
   assets            CurriculumAsset[]
   assetContextLinks AssetContextLink[]
@@ -144,20 +144,23 @@ enum ActionHistoryStatus {
 }
 
 model User {
-  id               String         @id @default(cuid())
-  email            String         @unique
-  name             String?
-  passwordHash     String?        @map("password_hash")
-  role             Role           @default(STAFF)
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
-  workshopsCreated Workshop[]     @relation("WorkshopCreator")
-  courseWorkspacesCreated CourseWorkspace[] @relation("CourseWorkspaceCreator")
-  actionHistory    ActionHistory[] @relation("ActorActionHistory")
-  debugIssuesReported DebugIssue[] @relation("DebugIssueReporter")
-  debugIssuesResolved DebugIssue[] @relation("DebugIssueResolver")
-  accounts         Account[]
-  sessions         Session[]
+  id                      String                @id @default(cuid())
+  email                   String                @unique
+  name                    String?
+  passwordHash            String?               @map("password_hash")
+  role                    Role                  @default(STAFF)
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+  workshopsCreated        Workshop[]            @relation("WorkshopCreator")
+  courseWorkspacesCreated CourseWorkspace[]     @relation("CourseWorkspaceCreator")
+  actionHistory           ActionHistory[]       @relation("ActorActionHistory")
+  debugIssuesReported     DebugIssue[]          @relation("DebugIssueReporter")
+  debugIssuesResolved     DebugIssue[]          @relation("DebugIssueResolver")
+  debugIssuesArchived     DebugIssue[]          @relation("DebugIssueArchiver")
+  debugIssueMessages      DebugIssueMessage[]   @relation("DebugIssueMessageAuthor")
+  debugIssueViewStates    DebugIssueViewState[] @relation("DebugIssueViewStateUser")
+  accounts                Account[]
+  sessions                Session[]
 
   @@map("users")
 }
@@ -195,27 +198,75 @@ enum DebugIssueStatus {
 }
 
 model DebugIssue {
-  id             String           @id @default(uuid()) @db.Uuid
-  title          String
-  description    String
-  pageUrl        String?          @map("page_url")
-  status         DebugIssueStatus @default(OPEN)
-  adminResponse  String?          @map("admin_response")
-  reporterUserId String?          @map("reporter_user_id")
-  reporterName   String?          @map("reporter_name")
-  reporterEmail  String?          @map("reporter_email")
-  resolvedById   String?          @map("resolved_by_id")
-  resolvedByName String?          @map("resolved_by_name")
-  resolvedAt     DateTime?        @map("resolved_at")
-  createdAt      DateTime         @default(now()) @map("created_at")
-  updatedAt      DateTime         @updatedAt @map("updated_at")
-  reporter       User?            @relation("DebugIssueReporter", fields: [reporterUserId], references: [id], onDelete: SetNull)
-  resolver       User?            @relation("DebugIssueResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  id                     String                @id @default(uuid()) @db.Uuid
+  title                  String
+  description            String
+  pageUrl                String?               @map("page_url")
+  status                 DebugIssueStatus      @default(OPEN)
+  adminResponse          String?               @map("admin_response")
+  reporterUserId         String?               @map("reporter_user_id")
+  reporterName           String?               @map("reporter_name")
+  reporterEmail          String?               @map("reporter_email")
+  resolvedById           String?               @map("resolved_by_id")
+  resolvedByName         String?               @map("resolved_by_name")
+  resolvedAt             DateTime?             @map("resolved_at")
+  archivedById           String?               @map("archived_by_id")
+  archivedByName         String?               @map("archived_by_name")
+  archivedAt             DateTime?             @map("archived_at")
+  lastAdminActivityAt    DateTime?             @map("last_admin_activity_at")
+  lastReporterActivityAt DateTime?             @map("last_reporter_activity_at")
+  createdAt              DateTime              @default(now()) @map("created_at")
+  updatedAt              DateTime              @updatedAt @map("updated_at")
+  reporter               User?                 @relation("DebugIssueReporter", fields: [reporterUserId], references: [id], onDelete: SetNull)
+  resolver               User?                 @relation("DebugIssueResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  archiver               User?                 @relation("DebugIssueArchiver", fields: [archivedById], references: [id], onDelete: SetNull)
+  messages               DebugIssueMessage[]
+  viewStates             DebugIssueViewState[]
 
   @@index([status])
+  @@index([archivedAt])
   @@index([reporterUserId, createdAt])
+  @@index([reporterUserId, lastAdminActivityAt])
   @@index([updatedAt])
   @@map("debug_issues")
+}
+
+enum DebugIssueMessageAuthorRole {
+  ADMIN
+  STAFF
+}
+
+model DebugIssueMessage {
+  id           String                      @id @default(uuid()) @db.Uuid
+  issueId      String                      @map("issue_id") @db.Uuid
+  authorUserId String?                     @map("author_user_id")
+  authorName   String?                     @map("author_name")
+  authorEmail  String?                     @map("author_email")
+  authorRole   DebugIssueMessageAuthorRole @map("author_role")
+  body         String
+  createdAt    DateTime                    @default(now()) @map("created_at")
+  issue        DebugIssue                  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author       User?                       @relation("DebugIssueMessageAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([issueId, createdAt])
+  @@index([authorUserId, createdAt])
+  @@map("debug_issue_messages")
+}
+
+model DebugIssueViewState {
+  id          String     @id @default(uuid()) @db.Uuid
+  issueId     String     @map("issue_id") @db.Uuid
+  userId      String     @map("user_id")
+  lastSeenAt  DateTime?  @map("last_seen_at")
+  dismissedAt DateTime?  @map("dismissed_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  issue       DebugIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user        User       @relation("DebugIssueViewStateUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@index([userId, updatedAt])
+  @@map("debug_issue_view_states")
 }
 
 model CourseWorkspace {
@@ -243,24 +294,24 @@ model CourseWorkspace {
 }
 
 model Workshop {
-  id              String             @id @default(uuid()) @db.Uuid
-  courseWorkspaceId String?           @map("course_workspace_id") @db.Uuid
-  title           String
-  courseLabel     String             @map("course_label")
-  termCode        String             @map("term_code")
-  summary         String?
-  tags            String[]           @default([])
-  inputJson       Json               @map("input_json")
-  templateVersion String             @default("workshop-template-v1") @map("template_version")
-  visibility      WorkshopVisibility @default(STAFF_COMMONS)
-  createdById     String?            @map("created_by_id")
-  createdByName   String?            @map("created_by_name")
-  createdAt       DateTime           @default(now()) @map("created_at")
-  updatedAt       DateTime           @updatedAt @map("updated_at")
-  archivedAt      DateTime?          @map("archived_at")
-  creator         User?              @relation("WorkshopCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  courseWorkspace CourseWorkspace?    @relation(fields: [courseWorkspaceId], references: [id], onDelete: SetNull)
-  units           WorkshopUnit[]
+  id                String             @id @default(uuid()) @db.Uuid
+  courseWorkspaceId String?            @map("course_workspace_id") @db.Uuid
+  title             String
+  courseLabel       String             @map("course_label")
+  termCode          String             @map("term_code")
+  summary           String?
+  tags              String[]           @default([])
+  inputJson         Json               @map("input_json")
+  templateVersion   String             @default("workshop-template-v1") @map("template_version")
+  visibility        WorkshopVisibility @default(STAFF_COMMONS)
+  createdById       String?            @map("created_by_id")
+  createdByName     String?            @map("created_by_name")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  archivedAt        DateTime?          @map("archived_at")
+  creator           User?              @relation("WorkshopCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  courseWorkspace   CourseWorkspace?   @relation(fields: [courseWorkspaceId], references: [id], onDelete: SetNull)
+  units             WorkshopUnit[]
 
   @@index([courseWorkspaceId])
   @@index([courseLabel])
@@ -299,7 +350,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
   @@map("accounts")

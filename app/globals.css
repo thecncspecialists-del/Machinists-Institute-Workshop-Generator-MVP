@@ -2087,8 +2087,8 @@ a:focus-visible {
 }
 
 .debug-issue-dialog {
-  max-width: 720px;
-  width: min(100%, 720px);
+  max-width: 980px;
+  width: min(100%, 980px);
 }
 
 .debug-issue-form {
@@ -2099,7 +2099,7 @@ a:focus-visible {
 }
 
 .debug-issue-form textarea {
-  min-height: 92px;
+  min-height: 76px;
 }
 
 .debug-issue-actions {
@@ -2114,12 +2114,52 @@ a:focus-visible {
   font-size: 0.82rem;
 }
 
-.debug-issue-list {
+.debug-request-tabs {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(96px, 1fr));
+  overflow: hidden;
+  width: fit-content;
+}
+
+.debug-request-tabs button {
+  background: #fff;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 9px 14px;
+}
+
+.debug-request-tabs button.active {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.debug-request-list {
   display: grid;
-  gap: 10px;
-  max-height: 440px;
+  gap: 6px;
+  max-height: 520px;
   overflow: auto;
   padding-right: 2px;
+}
+
+.debug-request-heading,
+.debug-request-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(190px, 1.4fr) 108px minmax(120px, 0.9fr) 96px 72px;
+}
+
+.debug-request-heading {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  padding: 0 10px;
+  text-transform: uppercase;
 }
 
 .debug-issue-empty {
@@ -2127,36 +2167,72 @@ a:focus-visible {
   margin: 4px 0;
 }
 
-.debug-issue-card {
+.debug-request-item {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
-  gap: 10px;
+  overflow: hidden;
+}
+
+.debug-request-item.unread {
+  border-color: color-mix(in srgb, var(--mi-blue) 42%, var(--line));
+}
+
+.debug-request-row {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.debug-request-row:hover {
+  background: var(--surface-strong);
+}
+
+.debug-request-title {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+}
+
+.debug-request-title strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.debug-request-title em {
+  background: color-mix(in srgb, var(--mi-blue) 10%, #fff);
+  border-radius: 999px;
+  color: var(--mi-blue);
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 900;
+  padding: 2px 7px;
+}
+
+.debug-request-detail {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
   padding: 12px;
 }
 
-.debug-issue-card-header {
-  align-items: flex-start;
-  display: flex;
+.debug-request-detail-grid {
+  display: grid;
   gap: 12px;
-  justify-content: space-between;
-}
-
-.debug-issue-card h3 {
-  font-size: 0.98rem;
-  margin: 0;
-}
-
-.debug-issue-card-header p,
-.debug-issue-response span {
-  color: var(--muted);
-  font-size: 0.8rem;
-  margin: 2px 0 0;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(260px, 1.2fr);
 }
 
 .debug-issue-description,
-.debug-issue-response p {
+.debug-message p {
   margin: 0;
   white-space: pre-wrap;
 }
@@ -2192,25 +2268,145 @@ a:focus-visible {
   width: fit-content;
 }
 
-.debug-issue-admin-form,
-.debug-issue-response {
+.debug-message-thread {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.debug-message {
+  background: var(--surface-strong);
+  border-left: 4px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+}
+
+.debug-message.admin {
+  border-left-color: var(--mi-blue);
+}
+
+.debug-message.staff {
+  border-left-color: var(--sage);
+}
+
+.debug-message div {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.debug-message span,
+.debug-archive-actions span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.debug-issue-admin-form {
   background: var(--surface-strong);
   border-radius: 8px;
   display: grid;
   gap: 8px;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
   padding: 10px;
 }
 
-.debug-issue-admin-form {
-  grid-template-columns: 150px minmax(0, 1fr) auto;
-}
-
-.debug-issue-admin-form textarea {
+.debug-issue-admin-form textarea,
+.debug-reply-form textarea {
   min-height: 70px;
 }
 
-.debug-issue-response strong {
-  font-size: 0.84rem;
+.debug-reply-form {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.debug-archive-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.debug-notification-pane {
+  background: color-mix(in srgb, var(--mi-blue) 7%, #fff);
+  border: 1px solid color-mix(in srgb, var(--mi-blue) 22%, var(--line));
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+}
+
+.debug-notification-pane-header,
+.debug-notification-pane-header div,
+.debug-notification-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.debug-notification-pane-header {
+  justify-content: space-between;
+}
+
+.debug-notification-list {
+  display: grid;
+  gap: 8px;
+}
+
+.debug-notification-item {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 10px;
+}
+
+.debug-notification-item div:first-child {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.debug-notification-item p {
+  color: var(--muted);
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .debug-request-heading {
+    display: none;
+  }
+
+  .debug-request-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .debug-request-row > span:nth-child(3),
+  .debug-request-row > span:nth-child(4),
+  .debug-request-row > span:nth-child(5) {
+    display: none;
+  }
+
+  .debug-request-detail-grid,
+  .debug-issue-admin-form,
+  .debug-reply-form,
+  .debug-notification-item {
+    grid-template-columns: 1fr;
+  }
 }
 
 .workshop-preview {
