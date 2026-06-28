@@ -26,6 +26,8 @@ items as release blockers before exposing it to a broader audience.
 - Add browser e2e coverage for import preview, import commit, draft generation
   failure when AI is unconfigured, save asset, and asset review status updates.
 - Run `npm run test` and `npm run build` before release.
+- Run `npm audit --omit=dev` before release and review
+  `docs/ORG_READINESS_AUDIT.md` for accepted dependency risks.
 - Run `npm run db:migrate:deploy` only after the production backup and baseline
   decision are documented.
 - Confirm Canvas preview images load from `/public` in the deployed environment.
