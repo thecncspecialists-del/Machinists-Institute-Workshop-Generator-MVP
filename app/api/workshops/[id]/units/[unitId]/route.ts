@@ -113,11 +113,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string; unitId: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string; unitId: string }> }) {
   const authResult = await requireStaffUser();
   if (authResult.response || !authResult.user) {
     return authResult.response ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  const actor = { id: authResult.user.id, email: authResult.user.email };
+  const guard = await runApiMutationGuard({
+    request,
+    actor,
+    area: "workshop_generator",
+    guardActionType: "workshop_unit_delete_guard",
+    idempotencyActionType: "workshop_unit_delete",
+    rateLimit: {
+      actionTypes: ["workshop_unit_delete", "workshop_unit_delete_guard"],
+      max: 120,
+      windowMs: 5 * 60 * 1000
+    }
+  });
+  if (guard.response) return guard.response;
 
   const { id, unitId } = paramsSchema.parse(await params);
   await ensureWorkshopUnitsTable(prisma);
@@ -136,7 +151,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   });
 
   await recordActionHistory({
-    actor: { id: authResult.user.id, email: authResult.user.email },
+    actor,
     actionType: "workshop_unit_delete",
     description: "Deleted workshop unit.",
     area: "workshop_generator",

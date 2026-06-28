@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import instructors from "@/data/instructors.json";
 import type { prisma as prismaSingleton } from "@/lib/db";
+import { VALIDATION_LIMITS } from "@/lib/validation-limits";
 
 export const ADMIN_EMAIL = "thecncspecialists@gmail.com";
 
@@ -12,7 +13,7 @@ type PrismaLike = typeof prismaSingleton;
 
 export const adminUserInputSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
-  name: z.string().trim().optional().default(""),
+  name: z.string().trim().max(VALIDATION_LIMITS.adminUserNameMax).optional().default(""),
   role: z.nativeEnum(Role).optional().default(Role.STAFF)
 });
 

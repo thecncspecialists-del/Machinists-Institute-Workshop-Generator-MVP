@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { logBackendError, logBackendEvent } from "@/lib/logger";
 import { requireStaffUser } from "@/lib/require-staff-user";
 import { renderStructuredAsset, validateAssetOutput } from "@/lib/renderAsset";
+import { VALIDATION_LIMITS } from "@/lib/validation-limits";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,10 @@ export const runtime = "nodejs";
 const generateSchema = z.object({
   courseId: z.string().uuid().optional().nullable(),
   assetType: z.enum(activeAssetTypes),
-  input: z.record(z.string()).default({})
+  input: z
+    .record(z.string().max(VALIDATION_LIMITS.aiInputValueMaxChars))
+    .refine((value) => Object.keys(value).length <= VALIDATION_LIMITS.aiInputMaxFields, "Too many input fields.")
+    .default({})
 });
 
 export async function POST(request: Request) {

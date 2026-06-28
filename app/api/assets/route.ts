@@ -1,6 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import { ActionHistoryStatus, type Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { recordActionHistory } from "@/lib/action-history";
+import { runApiMutationGuard } from "@/lib/api-mutation-guards";
 import { assetStatuses, assetTypes } from "@/lib/constants";
 import { createAssetSnapshot } from "@/lib/assetRepository";
 import { prisma } from "@/lib/db";
@@ -64,11 +66,26 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const authResult = await requireStaffUser();
-  if (authResult.response) {
-    return authResult.response;
+  if (authResult.response || !authResult.user) {
+    return authResult.response ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   try {
+    const actor = { id: authResult.user.id, email: authResult.user.email };
+    const guard = await runApiMutationGuard({
+      request,
+      actor,
+      area: "asset_repository",
+      guardActionType: "asset_save_guard",
+      idempotencyActionType: "asset_save",
+      rateLimit: {
+        actionTypes: ["asset_save", "asset_save_guard"],
+        max: 80,
+        windowMs: 5 * 60 * 1000
+      }
+    });
+    if (guard.response) return guard.response;
+
     const payload = createAssetSchema.parse(await request.json());
     const createdBy = payload.createdBy?.trim() || process.env.APP_DEFAULT_CONTRIBUTOR || "Curriculum Community";
 
@@ -93,6 +110,17 @@ export async function POST(request: Request) {
       htmlOutput: payload.htmlOutput,
       createdBy,
       contextSnapshotJson
+    });
+
+    await recordActionHistory({
+      actor,
+      actionType: "asset_save",
+      description: "Saved curriculum asset snapshot.",
+      area: "asset_repository",
+      affectedType: "curriculum_asset",
+      affectedId: asset.id,
+      status: ActionHistoryStatus.SUCCESS,
+      metadata: { assetType: asset.assetType, status: asset.status, courseId: asset.courseId }
     });
 
     return NextResponse.json({ asset });

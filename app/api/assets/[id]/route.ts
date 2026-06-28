@@ -1,6 +1,8 @@
-import type { Prisma } from "@prisma/client";
+import { ActionHistoryStatus, type Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { recordActionHistory } from "@/lib/action-history";
+import { runApiMutationGuard } from "@/lib/api-mutation-guards";
 import { assetStatuses } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { logBackendError, logBackendEvent } from "@/lib/logger";
@@ -20,11 +22,26 @@ const updateAssetSchema = z.object({
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await requireStaffUser();
-  if (authResult.response) {
-    return authResult.response;
+  if (authResult.response || !authResult.user) {
+    return authResult.response ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   try {
+    const actor = { id: authResult.user.id, email: authResult.user.email };
+    const guard = await runApiMutationGuard({
+      request,
+      actor,
+      area: "asset_repository",
+      guardActionType: "asset_review_guard",
+      idempotencyActionType: "asset_review_update",
+      rateLimit: {
+        actionTypes: ["asset_review_update", "asset_review_guard"],
+        max: 120,
+        windowMs: 5 * 60 * 1000
+      }
+    });
+    if (guard.response) return guard.response;
+
     const { id } = paramsSchema.parse(await params);
     const payload = updateAssetSchema.parse(await request.json());
     const data: Prisma.CurriculumAssetUpdateInput = {};
@@ -50,6 +67,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       assetType: asset.assetType,
       status: asset.status,
       updateMode: "review_details"
+    });
+
+    await recordActionHistory({
+      actor,
+      actionType: "asset_review_update",
+      description: "Updated curriculum asset review details.",
+      area: "asset_repository",
+      affectedType: "curriculum_asset",
+      affectedId: asset.id,
+      status: ActionHistoryStatus.SUCCESS,
+      metadata: { assetType: asset.assetType, status: asset.status }
     });
 
     return NextResponse.json({ asset });

@@ -1,7 +1,9 @@
-import { WorkshopVisibility } from "@prisma/client";
+import { ActionHistoryStatus, WorkshopVisibility } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { recordActionHistory } from "@/lib/action-history";
+import { runApiMutationGuard } from "@/lib/api-mutation-guards";
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
 import {
@@ -69,6 +71,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return authResult.response ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
+  const actor = { id: authResult.user.id, email: authResult.user.email };
+  const guard = await runApiMutationGuard({
+    request,
+    actor,
+    area: "course_workspace",
+    guardActionType: "course_workspace_update_guard",
+    idempotencyActionType: "course_workspace_update",
+    rateLimit: {
+      actionTypes: ["course_workspace_update", "course_workspace_update_guard"],
+      max: 80,
+      windowMs: 5 * 60 * 1000
+    }
+  });
+  if (guard.response) return guard.response;
+
   await ensureCourseWorkspaceTables(prisma);
   await ensureWorkshopUnitsTable(prisma);
   const { id } = paramsSchema.parse(await params);
@@ -111,6 +128,17 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
       }
     }
+  });
+
+  await recordActionHistory({
+    actor,
+    actionType: "course_workspace_update",
+    description: "Updated course workspace home page.",
+    area: "course_workspace",
+    affectedType: "course_workspace",
+    affectedId: saved.id,
+    status: ActionHistoryStatus.SUCCESS,
+    metadata: { courseId: saved.courseId, title: saved.title }
   });
 
   return NextResponse.json({ workspace: serializeCourseWorkspace(saved), saveMode: "updated" });

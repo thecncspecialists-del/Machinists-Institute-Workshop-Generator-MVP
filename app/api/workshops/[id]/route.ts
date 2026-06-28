@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { recordActionHistory } from "@/lib/action-history";
+import { runApiMutationGuard } from "@/lib/api-mutation-guards";
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
 import { ensureWorkshopUnitsTable, serializeWorkshopUnit } from "@/lib/workshop-generator/workshop-units";
@@ -54,11 +55,26 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   });
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await requireStaffUser();
   if (authResult.response || !authResult.user) {
     return authResult.response ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  const actor = { id: authResult.user.id, email: authResult.user.email };
+  const guard = await runApiMutationGuard({
+    request,
+    actor,
+    area: "workshop_generator",
+    guardActionType: "workshop_archive_guard",
+    idempotencyActionType: "workshop_archive",
+    rateLimit: {
+      actionTypes: ["workshop_archive", "workshop_archive_guard"],
+      max: 80,
+      windowMs: 5 * 60 * 1000
+    }
+  });
+  if (guard.response) return guard.response;
 
   const { id } = paramsSchema.parse(await params);
   const workshop = await prisma.workshop.findFirst({
@@ -74,7 +90,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   });
 
   await recordActionHistory({
-    actor: { id: authResult.user.id, email: authResult.user.email },
+    actor,
     actionType: "workshop_archive",
     description: "Archived workshop from class navigation.",
     area: "workshop_generator",

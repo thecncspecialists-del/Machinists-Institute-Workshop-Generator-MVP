@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { parseCourseCatalog } from "@/lib/importParser";
 import { logBackendError, logBackendEvent } from "@/lib/logger";
 import { requireStaffUser } from "@/lib/require-staff-user";
+import { isFileWithinLimit, VALIDATION_LIMITS } from "@/lib/validation-limits";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Upload an XLSX or CSV file." }, { status: 400 });
+    }
+    if (!isFileWithinLimit(file)) {
+      return NextResponse.json({ error: `Import files must be ${VALIDATION_LIMITS.importFileMaxBytes} bytes or smaller.` }, { status: 413 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());

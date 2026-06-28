@@ -24,6 +24,17 @@ vi.mock("@/lib/logger", () => ({
   logBackendError: logBackendErrorMock
 }));
 
+vi.mock("@/lib/api-mutation-guards", () => ({
+  runApiMutationGuard: vi.fn(async () => ({
+    response: null,
+    idempotency: { key: null }
+  }))
+}));
+
+vi.mock("@/lib/action-history", () => ({
+  recordActionHistory: vi.fn()
+}));
+
 vi.mock("@/lib/require-staff-user", () => ({
   requireStaffUser: vi.fn(async () => ({
     response: null,
