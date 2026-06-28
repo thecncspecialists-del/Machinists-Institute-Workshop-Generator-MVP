@@ -39,6 +39,18 @@ function normalizeSearchTerm(value: string) {
   return value.trim().toLowerCase();
 }
 
+function normalizeCatalogKeyPart(value: string) {
+  return normalizeSearchTerm(value).replace(/\s+/g, " ");
+}
+
+function dedupeKey(item: ExternalLmsCatalogItem) {
+  return [
+    item.provider,
+    normalizeCatalogKeyPart(item.catalogId || item.classId || item.module),
+    normalizeCatalogKeyPart(item.title)
+  ].join("|");
+}
+
 function searchableText(item: ExternalLmsCatalogItem) {
   return [
     item.title,
@@ -73,11 +85,15 @@ export function searchExternalLmsCatalog(options: ExternalLmsSearchOptions = {})
   const terms = query.split(/\s+/).filter(Boolean);
 
   const results: ExternalLmsCatalogItem[] = [];
+  const seen = new Set<string>();
 
   for (const item of typedCatalogItems) {
     if (provider && item.provider !== provider) continue;
     const haystack = terms.length ? searchableText(item) : "";
     if (terms.length && !terms.every((term) => haystack.includes(term))) continue;
+    const key = dedupeKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
     results.push(item);
     if (results.length >= limit) break;
   }

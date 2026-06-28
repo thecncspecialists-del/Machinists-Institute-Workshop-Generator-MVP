@@ -46,4 +46,10 @@ describe("external LMS catalog", () => {
     expect(result.items).toHaveLength(100);
     expect(result.limit).toBe(100);
   });
+
+  it("deduplicates repeated catalog rows while browsing", () => {
+    const result = searchExternalLmsCatalog({ provider: "electude", query: "Multimeter Auto Range", limit: 25 });
+
+    expect(result.items.filter((item) => item.title === "Multimeter Auto Range" && item.catalogId === "31")).toHaveLength(1);
+  });
 });

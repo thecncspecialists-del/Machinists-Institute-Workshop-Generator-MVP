@@ -66,7 +66,7 @@ function baseItem(provider, row, index) {
   const title = clean(row.Name);
   const catalogId = clean(row["Class Id"]) || clean(row.Module) || `${index + 1}`;
   return {
-    id: `${provider}:${slug(catalogId)}:${slug(title) || index + 1}`,
+    id: `${provider}:${slug(catalogId)}:${slug(title) || "item"}:${index + 1}`,
     provider,
     providerLabel: providers[provider],
     title,
