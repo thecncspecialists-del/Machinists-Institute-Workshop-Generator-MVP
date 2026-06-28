@@ -1115,6 +1115,13 @@ label {
   line-height: 1.25;
 }
 
+.field-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+  line-height: 1.25;
+}
+
 input,
 select,
 textarea {
@@ -1132,6 +1139,124 @@ textarea {
 textarea {
   min-height: 104px;
   resize: vertical;
+}
+
+.delivery-choice {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  width: fit-content;
+}
+
+.delivery-choice button {
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 7px 12px;
+}
+
+.delivery-choice button.active {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 24, 20, 0.08);
+  color: var(--sage-strong);
+}
+
+.external-lms-picker {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+}
+
+.external-lms-controls {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(130px, 0.32fr) minmax(0, 1fr);
+}
+
+.external-lms-selected {
+  align-items: center;
+  background: #eef5f3;
+  border: 1px solid #cfe1dc;
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 10px;
+}
+
+.external-lms-selected span,
+.external-lms-result span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.external-lms-selected strong,
+.external-lms-result strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.external-lms-selected p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: 2px 0 0;
+}
+
+.external-lms-results {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  max-height: 290px;
+  overflow: auto;
+}
+
+.external-lms-result {
+  background: #fff;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  min-height: 58px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.external-lms-result:last-child {
+  border-bottom: 0;
+}
+
+.external-lms-result:hover,
+.external-lms-result.selected {
+  background: color-mix(in srgb, var(--sage) 8%, #ffffff);
+}
+
+.external-lms-result em {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.external-lms-empty {
+  color: var(--muted);
+  margin: 0;
+  padding: 12px;
 }
 
 input:focus,

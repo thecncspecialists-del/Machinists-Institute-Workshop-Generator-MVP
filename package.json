@@ -11,6 +11,7 @@
     "db:push": "prisma db push",
     "db:init": "prisma migrate deploy",
     "db:migrate:deploy": "prisma migrate deploy",
+    "catalog:build:external-lms": "node scripts/build-external-lms-catalog.mjs",
     "user:create-admin": "node scripts/user-create-admin.mjs",
     "user:reset-password": "node scripts/user-reset-password.mjs",
     "user:provision-instructors": "node scripts/user-provision-instructors.mjs"

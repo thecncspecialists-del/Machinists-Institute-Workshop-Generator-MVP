@@ -47,7 +47,85 @@ function renderCheckoffTable(items: string[]) {
   );
 }
 
+function metadataRows(input: UnitActivityInput) {
+  const asset = input.externalLmsAsset;
+  if (!asset) return "";
+
+  const rows = [
+    ["Provider", asset.providerLabel],
+    ["Catalog ID", asset.catalogId],
+    ["Class ID", asset.classId],
+    ["Module", asset.module],
+    ["Duration", asset.duration || input.estimatedTime],
+    ["Functional Area", asset.functionalArea],
+    ["Department", asset.department],
+    ["Section", asset.section],
+    ["Language", asset.language],
+    ["Level", asset.level],
+    ["Last Updated", asset.lastUpdated],
+    ["Physical Toolkit ID", asset.physicalToolkitId]
+  ].filter(([, value]) => value.trim());
+
+  if (rows.length === 0) return "";
+
+  return `<table style="width: 100%; border-collapse: collapse;">
+    <tbody>
+      ${rows
+        .map(
+          ([label, value]) => `<tr>
+        <th style="width: 32%; padding: 8px; background: #f5f6f7; text-align: left; border: 1px solid #dadde1;">${escapeHtml(label)}</th>
+        <td style="padding: 8px; border: 1px solid #dadde1;">${escapeHtml(value)}</td>
+      </tr>`
+        )
+        .join("")}
+    </tbody>
+  </table>`;
+}
+
+function renderExternalLmsUnit(input: UnitActivityInput) {
+  const asset = input.externalLmsAsset;
+  if (!asset) return "";
+
+  const unitLabel = `Unit ${escapeHtml(input.unitNumber)} | ${escapeHtml(input.title)}`;
+  const courseMeta = [input.courseLabel, input.workshopTitle, input.termLabel].filter(Boolean).map(escapeHtml).join(" - ");
+  const description = asset.description || input.purpose;
+  const pathText = asset.path ? `<p style="margin: 8px 0 0;"><strong>Catalog Path:</strong><br />${escapeHtml(asset.path)}</p>` : "";
+  const launchLink = asset.url
+    ? `<p style="margin: 14px 0 0;">${renderLink(`Open ${asset.providerLabel} reference`, asset.url)}</p>`
+    : "";
+
+  return `
+<div style="max-width: 900px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #222;">
+  <p style="text-align: center; margin: 0 0 14px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${BRAND_ASSETS.headerBanner}" alt="Machinists Institute Header Banner" /></p>
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;">
+    <img style="height: 54px; width: auto;" src="${BRAND_ASSETS.logo}" alt="Machinists Institute Logo" />
+    <div>
+      <div style="color: #0e5a72; font-size: 1.2em;">${unitLabel}</div>
+      ${courseMeta ? `<div style="color: #66736b; font-size: 0.95em;">${courseMeta}</div>` : ""}
+    </div>
+  </div>
+  <div style="background: #f5f6f7; padding: 16px; border: 1px solid #dadde1;">
+    <h3 style="color: #0e5a72; margin: 0 0 8px; text-align: center;">External LMS Activity</h3>
+    <p style="margin: 0;"><strong>${escapeHtml(asset.providerLabel)}:</strong> ${escapeHtml(asset.title)}</p>
+    ${description ? `<p style="margin: 8px 0 0;">${textOr(description, "&nbsp;")}</p>` : ""}
+    ${pathText}
+    ${launchLink}
+  </div>
+  ${sectionDivider()}
+  <h3 style="color: #0e5a72;">Asset Details</h3>
+  ${metadataRows(input)}
+  <div style="background: #eef6f8; padding: 16px; border-left: 6px solid #0e5a72; margin-top: 18px;">
+    <p style="margin: 0;"><strong>Canvas Setup Note:</strong> Complete this unit through the embedded ${escapeHtml(asset.providerLabel)} SCORM/LMS activity in Canvas. This page records the selected catalog asset and should be paired with the matching external LMS launch item.</p>
+  </div>
+  <p style="text-align: center; margin-top: 20px;"><img style="max-width: 100%; height: auto; border-radius: 6px;" src="${BRAND_ASSETS.footerBanner}" alt="Machinists Institute Footer Banner" /></p>
+</div>`.trim();
+}
+
 export function renderUnitActivityTemplateV1(input: UnitActivityInput) {
+  if (input.deliveryType === "external-lms" && input.externalLmsAsset) {
+    return renderExternalLmsUnit(input);
+  }
+
   const unitLabel = `Unit ${escapeHtml(input.unitNumber)} | ${escapeHtml(input.title)}`;
   const courseMeta = [input.courseLabel, input.workshopTitle, input.termLabel].filter(Boolean).map(escapeHtml).join(" - ");
   const prerequisite = input.prerequisiteText

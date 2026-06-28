@@ -4,6 +4,8 @@ import { generateUnitActivityHtml } from "@/lib/workshop-generator/generate-work
 import { unitActivityInputSchema, type UnitActivityInput } from "@/lib/workshop-generator/unit-activity-schema";
 
 const minimalUnitActivity: UnitActivityInput = {
+  deliveryType: "canvas-html",
+  externalLmsAsset: undefined,
   unitNumber: "3",
   title: "Cobot Assembly",
   sourceWorkshopId: "",
@@ -97,5 +99,47 @@ describe("unit activity template", () => {
     expect(unitActivityInputSchema.safeParse({ ...minimalUnitActivity, title: "" }).success).toBe(false);
     expect(unitActivityInputSchema.safeParse({ ...minimalUnitActivity, purpose: "" }).success).toBe(false);
     expect(unitActivityInputSchema.safeParse({ ...minimalUnitActivity, estimatedTime: "" }).success).toBe(false);
+  });
+
+  it("renders an external LMS unit without standard activity sections", () => {
+    const html = generateUnitActivityHtml({
+      ...minimalUnitActivity,
+      deliveryType: "external-lms",
+      title: "Intro to Adhesive Bonding 110",
+      purpose: "Complete this Tooling U lesson.",
+      estimatedTime: "Varies by LMS activity",
+      instructorDemonstration: ["Do not render this"],
+      whatToDoItems: ["Do not render this checklist"],
+      checkoffItems: ["Do not render this checkoff"],
+      externalLmsAsset: {
+        id: "tooling-u:670110:intro-to-adhesive-bonding-110",
+        provider: "tooling-u",
+        providerLabel: "Tooling U",
+        title: "Intro to Adhesive Bonding 110",
+        catalogId: "670110",
+        description: "This class describes adhesive bonding.",
+        url: "https://www.toolingu.com/class/670110",
+        duration: "",
+        path: "",
+        section: "",
+        module: "",
+        functionalArea: "Assembly / Final Stage Processes",
+        department: "Adhesives",
+        classId: "670110",
+        language: "English",
+        level: "Beginner",
+        lastUpdated: "2012-09-04",
+        physicalToolkitId: ""
+      }
+    });
+
+    expect(html).toContain("External LMS Activity");
+    expect(html).toContain("Tooling U");
+    expect(html).toContain("Intro to Adhesive Bonding 110");
+    expect(html).toContain("670110");
+    expect(html).toContain("https://www.toolingu.com/class/670110");
+    expect(html).not.toContain("Instructor Demonstration");
+    expect(html).not.toContain("What To Do");
+    expect(html).not.toContain("Instructor Checkoff");
   });
 });

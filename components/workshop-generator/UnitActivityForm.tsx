@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
+import type { ExternalLmsCatalogItem, ExternalLmsProvider } from "@/lib/external-lms-catalog";
 import type { UnitActivityInput } from "@/lib/workshop-generator/unit-activity-schema";
 
 type UnitActivityFormProps = {
@@ -16,6 +17,8 @@ type UnitActivityFormProps = {
 
 type TextFieldKey = Exclude<
   keyof UnitActivityInput,
+  | "deliveryType"
+  | "externalLmsAsset"
   | "learningObjectives"
   | "learningResources"
   | "materials"
@@ -58,6 +61,13 @@ const steps = [
   { id: "activity", label: "Activity" },
   { id: "checkoff", label: "Checkoff" }
 ] as const;
+const externalLmsSteps = steps.filter((step) => step.id === "outline" || step.id === "basics");
+const providerOptions: Array<{ value: ExternalLmsProvider | "all"; label: string }> = [
+  { value: "all", label: "All Providers" },
+  { value: "electude", label: "Electude" },
+  { value: "amatrol", label: "Amatrol" },
+  { value: "tooling-u", label: "Tooling U" }
+];
 
 function toListDrafts(input: UnitActivityInput): Record<ListFieldKey, string> {
   return {
@@ -73,10 +83,22 @@ function toListDrafts(input: UnitActivityInput): Record<ListFieldKey, string> {
   };
 }
 
+function externalPurposeFor(item: ExternalLmsCatalogItem) {
+  return item.description || `Complete this ${item.providerLabel} external LMS activity in Canvas.`;
+}
+
 export function UnitActivityForm({ value, onActivePreviewSection, onChange, hasSelectedUnit, unitNavigation, unitSelectionSignal = 0 }: UnitActivityFormProps) {
   const [listDrafts, setListDrafts] = useState<Record<ListFieldKey, string>>(() => toListDrafts(value));
   const [activeListField, setActiveListField] = useState<ListFieldKey | null>(null);
   const [activeStep, setActiveStep] = useState<(typeof steps)[number]["id"]>("outline");
+  const [providerFilter, setProviderFilter] = useState<ExternalLmsProvider | "all">("all");
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [catalogResults, setCatalogResults] = useState<ExternalLmsCatalogItem[]>([]);
+  const [catalogBusy, setCatalogBusy] = useState(false);
+  const [catalogError, setCatalogError] = useState("");
+  const deliveryType = value.deliveryType ?? "canvas-html";
+  const isExternalLms = deliveryType === "external-lms";
+  const activeSteps = isExternalLms ? externalLmsSteps : steps;
 
   useEffect(() => {
     const nextDrafts = toListDrafts(value);
@@ -108,6 +130,45 @@ export function UnitActivityForm({ value, onActivePreviewSection, onChange, hasS
     }
   }, [hasSelectedUnit, unitSelectionSignal]);
 
+  useEffect(() => {
+    if (isExternalLms && activeStep !== "outline" && activeStep !== "basics") {
+      setActiveStep("basics");
+    }
+  }, [activeStep, isExternalLms]);
+
+  useEffect(() => {
+    if (!isExternalLms || !hasSelectedUnit) return;
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      setCatalogBusy(true);
+      setCatalogError("");
+      const params = new URLSearchParams({
+        provider: providerFilter,
+        q: catalogQuery,
+        limit: "25"
+      });
+
+      fetch(`/api/external-lms-catalog?${params.toString()}`, { signal: controller.signal })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Catalog search failed.");
+          return response.json() as Promise<{ items: ExternalLmsCatalogItem[] }>;
+        })
+        .then((payload) => setCatalogResults(payload.items))
+        .catch((error) => {
+          if ((error as Error).name !== "AbortError") {
+            setCatalogError("Catalog search is unavailable right now.");
+          }
+        })
+        .finally(() => setCatalogBusy(false));
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [catalogQuery, hasSelectedUnit, isExternalLms, providerFilter]);
+
   function updateField(key: TextFieldKey, nextValue: string) {
     onChange({ ...value, [key]: nextValue });
   }
@@ -121,8 +182,100 @@ export function UnitActivityForm({ value, onActivePreviewSection, onChange, hasS
     onChange({ ...value, [key]: listValue });
   }
 
-  const activeStepIndex = steps.findIndex((step) => step.id === activeStep);
+  function updateDeliveryType(nextDeliveryType: UnitActivityInput["deliveryType"]) {
+    onChange({
+      ...value,
+      deliveryType: nextDeliveryType,
+      externalLmsAsset: nextDeliveryType === "external-lms" ? value.externalLmsAsset : undefined
+    });
+    setActiveStep("basics");
+  }
+
+  function selectExternalAsset(item: ExternalLmsCatalogItem) {
+    onChange({
+      ...value,
+      deliveryType: "external-lms",
+      externalLmsAsset: item,
+      title: item.title,
+      purpose: externalPurposeFor(item),
+      estimatedTime: item.duration || value.estimatedTime || "Varies by LMS activity"
+    });
+  }
+
+  function clearExternalAsset() {
+    onChange({
+      ...value,
+      deliveryType: "canvas-html",
+      externalLmsAsset: undefined
+    });
+  }
+
+  const activeStepIndex = Math.max(activeSteps.findIndex((step) => step.id === activeStep), 0);
   const isOutlineStep = activeStep === "outline";
+
+  function renderExternalLmsPicker() {
+    if (!isExternalLms) return null;
+
+    return (
+      <div className="field full">
+        <span className="field-label">External LMS Catalog Asset</span>
+        <div className="external-lms-picker">
+          <div className="external-lms-controls">
+            <label className="sr-only" htmlFor="externalLmsProvider">Provider</label>
+            <select id="externalLmsProvider" value={providerFilter} onChange={(event) => setProviderFilter(event.target.value as ExternalLmsProvider | "all")}>
+              {providerOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <label className="sr-only" htmlFor="externalLmsSearch">Search external LMS catalog</label>
+            <input
+              id="externalLmsSearch"
+              placeholder="Search title, class ID, department, path..."
+              value={catalogQuery}
+              onChange={(event) => setCatalogQuery(event.target.value)}
+            />
+          </div>
+          {value.externalLmsAsset ? (
+            <div className="external-lms-selected">
+              <div>
+                <span>{value.externalLmsAsset.providerLabel}</span>
+                <strong>{value.externalLmsAsset.title}</strong>
+                <p>
+                  {[value.externalLmsAsset.classId || value.externalLmsAsset.catalogId, value.externalLmsAsset.department, value.externalLmsAsset.duration]
+                    .filter(Boolean)
+                    .join(" | ")}
+                </p>
+              </div>
+              <button className="btn ghost subtle-action" type="button" onClick={clearExternalAsset}>
+                Clear
+              </button>
+            </div>
+          ) : null}
+          <div className="external-lms-results" aria-live="polite">
+            {catalogBusy ? <p className="external-lms-empty">Searching catalog...</p> : null}
+            {catalogError ? <p className="external-lms-empty">{catalogError}</p> : null}
+            {!catalogBusy && !catalogError && catalogResults.length === 0 ? <p className="external-lms-empty">No matching assets found.</p> : null}
+            {!catalogBusy && !catalogError
+              ? catalogResults.map((item) => (
+                  <button
+                    className={value.externalLmsAsset?.id === item.id ? "external-lms-result selected" : "external-lms-result"}
+                    key={item.id}
+                    type="button"
+                    onClick={() => selectExternalAsset(item)}
+                  >
+                    <span>{item.providerLabel}</span>
+                    <strong>{item.title}</strong>
+                    <em>{[item.classId || item.catalogId, item.department || item.section, item.duration || item.level].filter(Boolean).join(" | ")}</em>
+                  </button>
+                ))
+              : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   function stepFields() {
     if (activeStep === "outline") {
@@ -132,6 +285,18 @@ export function UnitActivityForm({ value, onActivePreviewSection, onChange, hasS
     if (activeStep === "basics") {
       return (
         <>
+          <div className="field full">
+            <span className="field-label">Unit Delivery *</span>
+            <div className="delivery-choice" role="group" aria-label="Unit delivery type">
+              <button className={deliveryType === "canvas-html" ? "active" : ""} type="button" onClick={() => updateDeliveryType("canvas-html")}>
+                Canvas HTML Activity
+              </button>
+              <button className={deliveryType === "external-lms" ? "active" : ""} type="button" onClick={() => updateDeliveryType("external-lms")}>
+                External LMS / SCORM
+              </button>
+            </div>
+          </div>
+          {renderExternalLmsPicker()}
           <div className="field">
             <label htmlFor="unitNumber">Unit Number *</label>
             <input id="unitNumber" placeholder="3" value={value.unitNumber} readOnly />
@@ -154,10 +319,12 @@ export function UnitActivityForm({ value, onActivePreviewSection, onChange, hasS
             <label htmlFor="estimatedTime">Estimated Time *</label>
             <input id="estimatedTime" placeholder="45-60 minutes" value={value.estimatedTime} onChange={(event) => updateField("estimatedTime", event.target.value)} />
           </div>
-          <div className="field">
-            <label htmlFor="heroImageUrl">Optional Image URL</label>
-            <input id="heroImageUrl" placeholder="Canvas image preview URL" value={value.heroImageUrl} onChange={(event) => updateField("heroImageUrl", event.target.value)} />
-          </div>
+          {!isExternalLms ? (
+            <div className="field">
+              <label htmlFor="heroImageUrl">Optional Image URL</label>
+              <input id="heroImageUrl" placeholder="Canvas image preview URL" value={value.heroImageUrl} onChange={(event) => updateField("heroImageUrl", event.target.value)} />
+            </div>
+          ) : null}
         </>
       );
     }
@@ -284,21 +451,21 @@ export function UnitActivityForm({ value, onActivePreviewSection, onChange, hasS
             type="button"
             aria-label="Previous unit step"
             disabled={activeStepIndex === 0}
-            onClick={() => setActiveStep(steps[Math.max(activeStepIndex - 1, 0)].id)}
+            onClick={() => setActiveStep(activeSteps[Math.max(activeStepIndex - 1, 0)].id)}
           >
-            ←
+            &larr;
           </button>
           <div>
-            <h3>{steps[activeStepIndex]?.label}</h3>
+            <h3>{activeSteps[activeStepIndex]?.label}</h3>
           </div>
           <button
             className="icon-btn"
             type="button"
             aria-label="Next unit step"
-            disabled={activeStepIndex === steps.length - 1 || (isOutlineStep && !hasSelectedUnit)}
-            onClick={() => setActiveStep(steps[Math.min(activeStepIndex + 1, steps.length - 1)].id)}
+            disabled={activeStepIndex === activeSteps.length - 1 || (isOutlineStep && !hasSelectedUnit)}
+            onClick={() => setActiveStep(activeSteps[Math.min(activeStepIndex + 1, activeSteps.length - 1)].id)}
           >
-            →
+            &rarr;
           </button>
         </div>
       </div>
@@ -314,18 +481,14 @@ export function UnitActivityForm({ value, onActivePreviewSection, onChange, hasS
               {stepFields()}
             </div>
             <div className="step-actions">
-              <button
-                className="btn ghost"
-                type="button"
-                onClick={() => setActiveStep("outline")}
-              >
+              <button className="btn ghost" type="button" onClick={() => setActiveStep("outline")}>
                 Unit Outline
               </button>
               <button
                 className="btn primary"
                 type="button"
-                disabled={activeStepIndex === steps.length - 1}
-                onClick={() => setActiveStep(steps[Math.min(activeStepIndex + 1, steps.length - 1)].id)}
+                disabled={activeStepIndex === activeSteps.length - 1}
+                onClick={() => setActiveStep(activeSteps[Math.min(activeStepIndex + 1, activeSteps.length - 1)].id)}
               >
                 Next
               </button>

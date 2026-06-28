@@ -1,6 +1,8 @@
 import type { UnitActivityInput } from "@/lib/workshop-generator/unit-activity-schema";
 
 export const DEFAULT_UNIT_ACTIVITY_INPUT: UnitActivityInput = {
+  deliveryType: "canvas-html",
+  externalLmsAsset: undefined,
   unitNumber: "",
   title: "",
   sourceWorkshopId: "",
