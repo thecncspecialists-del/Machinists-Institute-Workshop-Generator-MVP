@@ -5,8 +5,10 @@ items as release blockers before exposing it to a broader audience.
 
 ## Data and Schema
 
-- Convert the current `scripts/init-db.mjs` schema into Prisma migrations before
-  production deployment.
+- Keep `prisma/schema.prisma` and `prisma/migrations` as the schema source of
+  truth. Request handlers must not create or alter tables at runtime.
+- Follow `docs/DATABASE_MIGRATION_CHECKPOINT.md` before every production schema
+  checkpoint.
 - Back up Postgres before any schema migration and before large catalog imports.
 - Keep imported course data append-only unless a migration explicitly documents
   how official reference rows are replaced or superseded.
@@ -24,6 +26,8 @@ items as release blockers before exposing it to a broader audience.
 - Add browser e2e coverage for import preview, import commit, draft generation
   failure when AI is unconfigured, save asset, and asset review status updates.
 - Run `npm run test` and `npm run build` before release.
+- Run `npm run db:migrate:deploy` only after the production backup and baseline
+  decision are documented.
 - Confirm Canvas preview images load from `/public` in the deployed environment.
 
 ## Integrations

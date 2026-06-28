@@ -9,7 +9,7 @@
     "test": "vitest run",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:init": "node scripts/init-db.mjs",
+    "db:init": "prisma migrate deploy",
     "db:migrate:deploy": "prisma migrate deploy",
     "user:create-admin": "node scripts/user-create-admin.mjs",
     "user:reset-password": "node scripts/user-reset-password.mjs",

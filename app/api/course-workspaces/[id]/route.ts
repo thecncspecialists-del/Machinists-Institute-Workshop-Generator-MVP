@@ -6,13 +6,8 @@ import { recordActionHistory } from "@/lib/action-history";
 import { runApiMutationGuard } from "@/lib/api-mutation-guards";
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
-import {
-  ensureCourseWorkspaceTables,
-  prepareCourseWorkspaceForSave,
-  serializeCourseWorkspace
-} from "@/lib/workshop-generator/course-workspaces";
+import { prepareCourseWorkspaceForSave, serializeCourseWorkspace } from "@/lib/workshop-generator/course-workspaces";
 import { homePageInputSchema } from "@/lib/workshop-generator/home-page-schema";
-import { ensureWorkshopUnitsTable } from "@/lib/workshop-generator/workshop-units";
 
 export const runtime = "nodejs";
 
@@ -31,8 +26,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     return authResult.response;
   }
 
-  await ensureCourseWorkspaceTables(prisma);
-  await ensureWorkshopUnitsTable(prisma);
   const { id } = paramsSchema.parse(await params);
   const workspace = await prisma.courseWorkspace.findUnique({
     where: { id },
@@ -86,8 +79,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   });
   if (guard.response) return guard.response;
 
-  await ensureCourseWorkspaceTables(prisma);
-  await ensureWorkshopUnitsTable(prisma);
   const { id } = paramsSchema.parse(await params);
   const payload = updateWorkspaceRequestSchema.parse(await request.json());
   const existing = await prisma.courseWorkspace.findFirst({

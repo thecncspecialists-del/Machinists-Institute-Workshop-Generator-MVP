@@ -9,19 +9,12 @@ import { recordActionHistory } from "@/lib/action-history";
 import { prisma } from "@/lib/db";
 import { compactDateTime } from "@/lib/format";
 import { requireStaffUser } from "@/lib/require-staff-user";
-import {
-  createHomePageInputFromCourse,
-  ensureCourseWorkspaceTables,
-  prepareCourseWorkspaceForSave
-} from "@/lib/workshop-generator/course-workspaces";
-import { ensureWorkshopUnitsTable } from "@/lib/workshop-generator/workshop-units";
+import { createHomePageInputFromCourse, prepareCourseWorkspaceForSave } from "@/lib/workshop-generator/course-workspaces";
 
 export const dynamic = "force-dynamic";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await ensureCourseWorkspaceTables(prisma);
-  await ensureWorkshopUnitsTable(prisma);
   const course = await prisma.course.findUnique({
     where: { id },
     include: {
@@ -175,8 +168,6 @@ async function openCourseWorkspace(formData: FormData) {
     redirect("/sign-in");
   }
 
-  await ensureCourseWorkspaceTables(prisma);
-  await ensureWorkshopUnitsTable(prisma);
   const existingWorkspace = await prisma.courseWorkspace.findFirst({
     where: { courseId, archivedAt: null },
     orderBy: { updatedAt: "desc" },

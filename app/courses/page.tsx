@@ -4,7 +4,6 @@ import type { Prisma } from "@prisma/client";
 import { buildCourseBreadcrumbs, EditorBreadcrumbs } from "@/components/workshop-generator/EditorStatus";
 import { prisma } from "@/lib/db";
 import { emptyLabel } from "@/lib/format";
-import { ensureCourseWorkspaceTables } from "@/lib/workshop-generator/course-workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +62,6 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
   let error: string | null = null;
 
   try {
-    await ensureCourseWorkspaceTables(prisma);
     data = await getCourses(params);
   } catch (caught) {
     error = caught instanceof Error ? caught.message : "Database is not available.";

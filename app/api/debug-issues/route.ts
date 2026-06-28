@@ -37,50 +37,6 @@ const issueSelect = {
   updatedAt: true
 };
 
-let debugIssueTablesReady = false;
-
-async function ensureDebugIssueTables() {
-  if (debugIssueTablesReady) return;
-
-  await prisma.$executeRawUnsafe(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'DebugIssueStatus') THEN
-        CREATE TYPE "DebugIssueStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'FIXED');
-      END IF;
-    END
-    $$;
-  `);
-
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS "debug_issues" (
-      "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-      "title" TEXT NOT NULL,
-      "description" TEXT NOT NULL,
-      "page_url" TEXT,
-      "status" "DebugIssueStatus" NOT NULL DEFAULT 'OPEN',
-      "admin_response" TEXT,
-      "reporter_user_id" TEXT,
-      "reporter_name" TEXT,
-      "reporter_email" TEXT,
-      "resolved_by_id" TEXT,
-      "resolved_by_name" TEXT,
-      "resolved_at" TIMESTAMP(3),
-      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT "debug_issues_pkey" PRIMARY KEY ("id")
-    );
-  `);
-
-  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "debug_issues_status_idx" ON "debug_issues"("status");`);
-  await prisma.$executeRawUnsafe(
-    `CREATE INDEX IF NOT EXISTS "debug_issues_reporter_user_id_created_at_idx" ON "debug_issues"("reporter_user_id", "created_at");`
-  );
-  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "debug_issues_updated_at_idx" ON "debug_issues"("updated_at");`);
-
-  debugIssueTablesReady = true;
-}
-
 async function runDebugIssueMutationGuard(request: Request, actor: { id: string; email?: string | null }) {
   return runApiMutationGuard({
     request,
@@ -101,8 +57,6 @@ export async function GET() {
   if (authResult.response || !authResult.user) {
     return authResult.response ?? NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
-
-  await ensureDebugIssueTables();
 
   const isAdmin = authResult.user.role === Role.ADMIN;
   const issues = await prisma.debugIssue.findMany({
@@ -126,7 +80,6 @@ export async function POST(request: Request) {
     const guard = await runDebugIssueMutationGuard(request, actor);
     if (guard.response) return guard.response;
 
-    await ensureDebugIssueTables();
     const payload = createIssueSchema.parse(await request.json());
     const issue = await prisma.debugIssue.create({
       data: {
@@ -171,7 +124,6 @@ export async function PATCH(request: Request) {
     const guard = await runDebugIssueMutationGuard(request, actor);
     if (guard.response) return guard.response;
 
-    await ensureDebugIssueTables();
     const payload = updateIssueSchema.parse(await request.json());
     const fixed = payload.status === DebugIssueStatus.FIXED;
     const issue = await prisma.debugIssue.update({

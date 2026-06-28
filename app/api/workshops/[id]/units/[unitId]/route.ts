@@ -7,7 +7,7 @@ import { recordIdempotentMutationResult, runApiMutationGuard } from "@/lib/api-m
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
 import { unitActivityInputSchema } from "@/lib/workshop-generator/unit-activity-schema";
-import { ensureWorkshopUnitsTable, prepareUnitForSave, serializeWorkshopUnit } from "@/lib/workshop-generator/workshop-units";
+import { prepareUnitForSave, serializeWorkshopUnit } from "@/lib/workshop-generator/workshop-units";
 
 const paramsSchema = z.object({
   id: z.string().uuid(),
@@ -45,7 +45,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
   try {
     const { id, unitId } = paramsSchema.parse(await params);
-    await ensureWorkshopUnitsTable(prisma);
     const payload = updateUnitRequestSchema.parse(await request.json());
     const workshop = await prisma.workshop.findFirst({
       where: {
@@ -135,7 +134,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (guard.response) return guard.response;
 
   const { id, unitId } = paramsSchema.parse(await params);
-  await ensureWorkshopUnitsTable(prisma);
   const existing = await prisma.workshopUnit.findFirst({
     where: {
       id: unitId,

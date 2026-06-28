@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
-import { ensureCourseWorkspaceTables } from "@/lib/workshop-generator/course-workspaces";
 
 export const runtime = "nodejs";
 
@@ -25,7 +24,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     return authResult.response;
   }
 
-  await ensureCourseWorkspaceTables(prisma);
   const { id } = paramsSchema.parse(await params);
   const workspace = await prisma.courseWorkspace.findFirst({
     where: { id, archivedAt: null },

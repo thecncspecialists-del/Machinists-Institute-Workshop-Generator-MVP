@@ -6,7 +6,7 @@ import { recordActionHistory } from "@/lib/action-history";
 import { runApiMutationGuard } from "@/lib/api-mutation-guards";
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
-import { ensureWorkshopUnitsTable, serializeWorkshopUnit } from "@/lib/workshop-generator/workshop-units";
+import { serializeWorkshopUnit } from "@/lib/workshop-generator/workshop-units";
 
 const paramsSchema = z.object({
   id: z.string().uuid()
@@ -21,7 +21,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   }
 
   const { id } = paramsSchema.parse(await params);
-  await ensureWorkshopUnitsTable(prisma);
   const workshop = await prisma.workshop.findUnique({
     where: { id },
     include: {

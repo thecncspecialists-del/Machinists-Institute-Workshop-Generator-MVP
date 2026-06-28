@@ -14,10 +14,6 @@ const DEFAULT_HOME_PAGE_SKILLS = [
   { title: "Skill 4", description: "Description" }
 ];
 
-type WorkspaceBootstrapDb = {
-  $executeRawUnsafe: (query: string) => Promise<unknown>;
-};
-
 export type CourseWithOutcomes = Course & {
   outcomes: Pick<CourseOutcome, "outcomeCode" | "description">[];
 };
@@ -81,46 +77,6 @@ type WorkspaceWithRelations = CourseWorkspace & {
     units?: Pick<WorkshopUnit, "id" | "unitNumber" | "title">[];
   })[];
 };
-
-export async function ensureCourseWorkspaceTables(db: WorkspaceBootstrapDb) {
-  await db.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS "course_workspaces" (
-      "id" UUID PRIMARY KEY,
-      "course_id" UUID NOT NULL,
-      "title" TEXT NOT NULL,
-      "summary" TEXT,
-      "home_page_input_json" JSONB NOT NULL,
-      "home_page_html" TEXT NOT NULL,
-      "image_package_version" TEXT NOT NULL DEFAULT '${IMAGE_PACKAGE_VERSION}',
-      "visibility" "WorkshopVisibility" NOT NULL DEFAULT 'STAFF_COMMONS',
-      "created_by_id" TEXT,
-      "created_by_name" TEXT,
-      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "archived_at" TIMESTAMP(3)
-    )
-  `);
-  await db.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS "course_workspaces_course_id_idx"
-    ON "course_workspaces"("course_id")
-  `);
-  await db.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS "course_workspaces_title_idx"
-    ON "course_workspaces"("title")
-  `);
-  await db.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS "course_workspaces_updated_at_idx"
-    ON "course_workspaces"("updated_at")
-  `);
-  await db.$executeRawUnsafe(`
-    ALTER TABLE "workshops"
-    ADD COLUMN IF NOT EXISTS "course_workspace_id" UUID
-  `);
-  await db.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS "workshops_course_workspace_id_idx"
-    ON "workshops"("course_workspace_id")
-  `);
-}
 
 export function createHomePageInputFromCourse(course: CourseHomePageSeed): HomePageInput {
   const courseTitle = [course.courseCode, course.courseName].filter(Boolean).join(" - ");

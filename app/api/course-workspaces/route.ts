@@ -9,12 +9,10 @@ import { requireStaffUser } from "@/lib/require-staff-user";
 import {
   buildWorkspaceSearchWhere,
   createHomePageInputFromCourse,
-  ensureCourseWorkspaceTables,
   prepareCourseWorkspaceForSave,
   serializeCourseWorkspace
 } from "@/lib/workshop-generator/course-workspaces";
 import { homePageInputSchema } from "@/lib/workshop-generator/home-page-schema";
-import { ensureWorkshopUnitsTable } from "@/lib/workshop-generator/workshop-units";
 
 export const runtime = "nodejs";
 
@@ -35,8 +33,6 @@ export async function GET(request: Request) {
     return authResult.response;
   }
 
-  await ensureCourseWorkspaceTables(prisma);
-  await ensureWorkshopUnitsTable(prisma);
   const url = new URL(request.url);
   const query = parseStringParam(url, "q");
   const courseId = parseStringParam(url, "courseId");
@@ -99,8 +95,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    await ensureCourseWorkspaceTables(prisma);
-    await ensureWorkshopUnitsTable(prisma);
     const payload = saveWorkspaceRequestSchema.parse(await request.json());
     const course = await prisma.course.findUnique({
       where: { id: payload.courseId },

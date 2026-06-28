@@ -7,7 +7,6 @@ import { recordIdempotentMutationResult, runApiMutationGuard } from "@/lib/api-m
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
 import { normalizeWorkshopInput } from "@/lib/workshop-generator/normalize-workshop-input";
-import { ensureCourseWorkspaceTables } from "@/lib/workshop-generator/course-workspaces";
 import { buildVisibleWorkshopWhere, buildWorkshopSearchWhere } from "@/lib/workshop-generator/search-workshops";
 import { workshopInputSchema } from "@/lib/workshop-generator/workshop-schema";
 
@@ -95,7 +94,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    await ensureCourseWorkspaceTables(prisma);
     const payload = saveWorkshopRequestSchema.parse(await request.json());
     const normalizedWorkshop = normalizeWorkshopInput(payload.workshop);
     const summary = normalizedWorkshop.overview.slice(0, 300) || null;

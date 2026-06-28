@@ -6,7 +6,7 @@ import { recordActionHistory } from "@/lib/action-history";
 import { recordIdempotentMutationResult, runApiMutationGuard } from "@/lib/api-mutation-guards";
 import { prisma } from "@/lib/db";
 import { requireStaffUser } from "@/lib/require-staff-user";
-import { createDefaultUnitInput, ensureWorkshopUnitsTable, prepareUnitForSave, serializeWorkshopUnit } from "@/lib/workshop-generator/workshop-units";
+import { createDefaultUnitInput, prepareUnitForSave, serializeWorkshopUnit } from "@/lib/workshop-generator/workshop-units";
 
 const paramsSchema = z.object({
   id: z.string().uuid()
@@ -30,7 +30,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   }
 
   const { id } = paramsSchema.parse(await params);
-  await ensureWorkshopUnitsTable(prisma);
   const workshop = await findWorkshop(id);
   if (!workshop) {
     return NextResponse.json({ error: "Workshop not found." }, { status: 404 });
@@ -69,7 +68,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     const { id } = paramsSchema.parse(await params);
-    await ensureWorkshopUnitsTable(prisma);
     const workshop = await findWorkshop(id);
     if (!workshop) {
       return NextResponse.json({ error: "Workshop not found." }, { status: 404 });

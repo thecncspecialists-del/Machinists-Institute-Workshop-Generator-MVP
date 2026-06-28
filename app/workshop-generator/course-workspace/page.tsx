@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { CourseWorkspaceClient } from "@/components/workshop-generator/CourseWorkspaceClient";
 import { prisma } from "@/lib/db";
 import type { CourseHomePageSeed } from "@/lib/workshop-generator/course-workspaces";
-import { ensureCourseWorkspaceTables, serializeCourseWorkspace } from "@/lib/workshop-generator/course-workspaces";
-import { ensureWorkshopUnitsTable } from "@/lib/workshop-generator/workshop-units";
+import { serializeCourseWorkspace } from "@/lib/workshop-generator/course-workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +13,6 @@ export default async function CourseWorkspacePage({ searchParams }: { searchPara
   const params = await searchParams;
   const openWorkspaceId = stringParam(params.open);
   const courseId = stringParam(params.courseId);
-  await ensureCourseWorkspaceTables(prisma);
-  await ensureWorkshopUnitsTable(prisma);
 
   if (openWorkspaceId) {
     const workspace = await prisma.courseWorkspace.findFirst({
