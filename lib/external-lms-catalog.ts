@@ -29,6 +29,7 @@ export type ExternalLmsSearchOptions = {
   provider?: ExternalLmsProvider | "all" | "";
   query?: string;
   limit?: number;
+  page?: number;
 };
 
 const typedCatalogItems = catalogItems as ExternalLmsCatalogItem[];
@@ -43,7 +44,7 @@ function normalizeCatalogKeyPart(value: string) {
   return normalizeSearchTerm(value).replace(/\s+/g, " ");
 }
 
-function dedupeKey(item: ExternalLmsCatalogItem) {
+export function getExternalLmsAssetKey(item: Pick<ExternalLmsCatalogItem, "provider" | "catalogId" | "classId" | "module" | "title">) {
   return [
     item.provider,
     normalizeCatalogKeyPart(item.catalogId || item.classId || item.module),
@@ -82,25 +83,37 @@ export function searchExternalLmsCatalog(options: ExternalLmsSearchOptions = {})
   const provider = options.provider && options.provider !== "all" ? options.provider : "";
   const query = normalizeSearchTerm(options.query ?? "");
   const limit = Math.min(Math.max(options.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
+  const page = Math.max(options.page ?? 1, 1);
+  const skip = (page - 1) * limit;
   const terms = query.split(/\s+/).filter(Boolean);
 
-  const results: ExternalLmsCatalogItem[] = [];
+  const matches = getExternalLmsSearchMatches({ provider, query });
+
+  return {
+    items: matches.slice(skip, skip + limit),
+    limit,
+    page,
+    totalResults: matches.length,
+    totalCatalogItems: typedCatalogItems.length
+  };
+}
+
+export function getExternalLmsSearchMatches(options: Pick<ExternalLmsSearchOptions, "provider" | "query"> = {}) {
+  const provider = options.provider && options.provider !== "all" ? options.provider : "";
+  const query = normalizeSearchTerm(options.query ?? "");
+  const terms = query.split(/\s+/).filter(Boolean);
+  const matches: ExternalLmsCatalogItem[] = [];
   const seen = new Set<string>();
 
   for (const item of typedCatalogItems) {
     if (provider && item.provider !== provider) continue;
     const haystack = terms.length ? searchableText(item) : "";
     if (terms.length && !terms.every((term) => haystack.includes(term))) continue;
-    const key = dedupeKey(item);
+    const key = getExternalLmsAssetKey(item);
     if (seen.has(key)) continue;
     seen.add(key);
-    results.push(item);
-    if (results.length >= limit) break;
+    matches.push(item);
   }
 
-  return {
-    items: results,
-    limit,
-    totalCatalogItems: typedCatalogItems.length
-  };
+  return matches;
 }

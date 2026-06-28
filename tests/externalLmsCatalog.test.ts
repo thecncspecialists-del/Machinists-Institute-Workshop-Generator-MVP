@@ -47,6 +47,16 @@ describe("external LMS catalog", () => {
     expect(result.limit).toBe(100);
   });
 
+  it("paginates deduplicated search results", () => {
+    const firstPage = searchExternalLmsCatalog({ provider: "electude", query: "Multimeter", limit: 2, page: 1 });
+    const secondPage = searchExternalLmsCatalog({ provider: "electude", query: "Multimeter", limit: 2, page: 2 });
+
+    expect(firstPage.items).toHaveLength(2);
+    expect(secondPage.items).toHaveLength(2);
+    expect(firstPage.totalResults).toBeGreaterThan(2);
+    expect(secondPage.items[0].id).not.toBe(firstPage.items[0].id);
+  });
+
   it("deduplicates repeated catalog rows while browsing", () => {
     const result = searchExternalLmsCatalog({ provider: "electude", query: "Multimeter Auto Range", limit: 25 });
 

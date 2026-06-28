@@ -126,6 +126,12 @@ textarea {
   gap: 8px;
 }
 
+.sidebar-secondary-nav {
+  border-top: 1px solid var(--line);
+  margin-top: 32px;
+  padding-top: 16px;
+}
+
 .sidebar-footer {
   align-items: center;
   display: grid;
@@ -1068,6 +1074,35 @@ th {
 
 tr:hover .catalog-row-link {
   background: color-mix(in srgb, var(--sage) 7%, #ffffff);
+}
+
+.table-subtext {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 3px;
+}
+
+.lms-usage-list {
+  display: grid;
+  gap: 6px;
+}
+
+.lms-usage-link {
+  border-radius: 6px;
+  color: var(--ink);
+  display: grid;
+  gap: 2px;
+  padding: 4px;
+}
+
+.lms-usage-link:hover {
+  background: color-mix(in srgb, var(--sage) 7%, #ffffff);
+  color: var(--sage-strong);
+}
+
+.lms-usage-link span {
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .form-grid {

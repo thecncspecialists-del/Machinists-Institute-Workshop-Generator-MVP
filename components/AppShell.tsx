@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, ChevronDown, ChevronRight, ClipboardList, Layers3, LogOut, PanelTop, Sparkles, Trash2 } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, ClipboardList, Database, Layers3, LogOut, PanelTop, Sparkles, Trash2 } from "lucide-react";
 
 import { AdminUserOverlay } from "@/components/admin/AdminUserOverlay";
 import { DebugIssueOverlay } from "@/components/debug/DebugIssueOverlay";
@@ -120,6 +120,14 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           {hasActiveCourse ? <CourseTree /> : null}
+        </nav>
+        <nav className="nav sidebar-secondary-nav" aria-label="LMS navigation">
+          <div className="nav-section">
+            <Link href="/lms-browser" className={`nav-link ${pathname.startsWith("/lms-browser") ? "active" : ""}`}>
+              <Database size={18} />
+              <span>LMS Browser</span>
+            </Link>
+          </div>
         </nav>
         <div className="sidebar-footer">
           <div className="sidebar-tools">
