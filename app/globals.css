@@ -1198,12 +1198,14 @@ textarea {
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 850;
+  line-height: 1.15;
   text-transform: uppercase;
 }
 
 .external-lms-selected strong,
 .external-lms-result strong {
   display: block;
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1224,14 +1226,15 @@ textarea {
 }
 
 .external-lms-result {
+  align-content: center;
   background: #fff;
   border: 0;
   border-bottom: 1px solid var(--line);
   cursor: pointer;
   display: grid;
-  gap: 2px;
-  min-height: 58px;
-  padding: 8px 10px;
+  gap: 4px;
+  min-height: 74px;
+  padding: 10px 12px;
   text-align: left;
 }
 
@@ -1248,6 +1251,7 @@ textarea {
   color: var(--muted);
   font-size: 0.82rem;
   font-style: normal;
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
