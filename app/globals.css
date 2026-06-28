@@ -21,7 +21,7 @@
   --space-4: 16px;
   --control-height: 40px;
   --control-pad-x: 12px;
-  --builder-preview-height: calc(100vh - 48px);
+  --builder-preview-height: calc(100vh - 150px);
 }
 
 * {
@@ -978,7 +978,6 @@ h3 {
 
 .mode-home-page {
   --mode-accent: var(--mi-blue);
-  --builder-preview-height: calc(100vh - 150px);
 }
 
 .workshop-workspace:is(.mode-workshop, .mode-unit-activity, .mode-home-page) .btn.primary,
