@@ -5,22 +5,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { RefreshCw, Send, Settings, X } from "lucide-react";
 
-type DebugIssueStatus = "OPEN" | "IN_PROGRESS" | "FIXED";
-
-type DebugIssue = {
-  id: string;
-  title: string;
-  description: string;
-  pageUrl: string | null;
-  status: DebugIssueStatus;
-  adminResponse: string | null;
-  reporterName: string | null;
-  reporterEmail: string | null;
-  resolvedByName: string | null;
-  resolvedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+import { useDebugIssues, type DebugIssueStatus } from "@/components/debug/useDebugIssues";
 
 function statusLabel(status: DebugIssueStatus) {
   return status
@@ -42,28 +27,11 @@ function formatDate(value: string | null) {
 
 export function DebugIssueOverlay() {
   const [open, setOpen] = useState(false);
-  const [role, setRole] = useState<"ADMIN" | "STAFF" | null>(null);
-  const [issues, setIssues] = useState<DebugIssue[]>([]);
-  const [notice, setNotice] = useState<string | null>(null);
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const isAdmin = role === "ADMIN";
-
-  async function loadIssues() {
-    const response = await fetch("/api/debug-issues", { cache: "no-store" });
-    if (!response.ok) {
-      setNotice("Issue reporting is unavailable right now.");
-      return;
-    }
-    const payload = (await response.json()) as { role: "ADMIN" | "STAFF"; issues: DebugIssue[] };
-    setRole(payload.role);
-    setIssues(payload.issues);
-  }
+  const { busy, isAdmin, issues, loadIssues, notice, submitIssue: submitIssueMutation, updateIssue: updateIssueMutation } = useDebugIssues();
 
   useEffect(() => {
     setPortalRoot(document.body);
-    void loadIssues();
   }, []);
 
   useEffect(() => {
@@ -76,54 +44,24 @@ export function DebugIssueOverlay() {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    setBusy(true);
-    setNotice(null);
-    try {
-      const response = await fetch("/api/debug-issues", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: String(formData.get("title") ?? ""),
-          description: String(formData.get("description") ?? ""),
-          pageUrl: window.location.href
-        })
-      });
-      const payload = (await response.json()) as { issue?: DebugIssue; error?: string };
-      if (!response.ok || !payload.issue) throw new Error(payload.error || "Unable to submit issue.");
-      setIssues((current) => [payload.issue as DebugIssue, ...current]);
+    const submitted = await submitIssueMutation({
+      title: String(formData.get("title") ?? ""),
+      description: String(formData.get("description") ?? ""),
+      pageUrl: window.location.href
+    });
+    if (submitted) {
       form.reset();
-      setNotice("Issue submitted.");
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Unable to submit issue.");
-    } finally {
-      setBusy(false);
     }
   }
 
   async function updateIssue(event: FormEvent<HTMLFormElement>, id: string) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    setBusy(true);
-    setNotice(null);
-    try {
-      const response = await fetch("/api/debug-issues", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          status: String(formData.get("status") ?? "OPEN"),
-          adminResponse: String(formData.get("adminResponse") ?? "")
-        })
-      });
-      const payload = (await response.json()) as { issue?: DebugIssue; error?: string };
-      if (!response.ok || !payload.issue) throw new Error(payload.error || "Unable to update issue.");
-      setIssues((current) => current.map((issue) => (issue.id === id ? (payload.issue as DebugIssue) : issue)));
-      setNotice("Issue updated.");
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Unable to update issue.");
-    } finally {
-      setBusy(false);
-    }
+    await updateIssueMutation({
+      id,
+      status: String(formData.get("status") ?? "OPEN") as DebugIssueStatus,
+      adminResponse: String(formData.get("adminResponse") ?? "")
+    });
   }
 
   const dialog =
