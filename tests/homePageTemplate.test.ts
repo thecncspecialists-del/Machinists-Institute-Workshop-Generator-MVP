@@ -61,7 +61,8 @@ describe("home page template", () => {
     expect(html).toContain("Duration");
     expect(html).toContain("Total Hours");
     expect(html).toContain("<p>&nbsp;</p>");
-    expect(html).toContain("Skill Title");
+    expect(html).toContain("Skill 1");
+    expect(html).toContain("Skill 4");
   });
 
   it("reflects added and removed skills", () => {
@@ -80,8 +81,8 @@ describe("home page template", () => {
   it("uses predictable filename image references instead of Canvas file API endpoints", () => {
     const html = generateHomePageHtml(minimalHomePage);
 
-    expect(html).toContain('src="mi-logo-full.png"');
-    expect(html).toContain('src="mi-page-header.jpg"');
+    expect(html).toContain('src="https://workshops.thecnc.network/branding/mi-logo-full.png"');
+    expect(html).toContain("Image Placeholder");
     expect(html).not.toContain("data-api-endpoint");
   });
 });

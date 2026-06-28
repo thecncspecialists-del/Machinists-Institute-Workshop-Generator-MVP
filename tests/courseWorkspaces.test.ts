@@ -52,8 +52,8 @@ describe("course workspaces", () => {
     });
 
     expect(prepared.summary).toBe("Course overview.");
-    expect(prepared.html).toContain('src="mi-logo-full.png"');
-    expect(prepared.html).toContain('src="mi-page-header.jpg"');
+    expect(prepared.html).toContain('src="https://workshops.thecnc.network/branding/mi-logo-full.png"');
+    expect(prepared.html).toContain("Image Placeholder");
   });
 
   it("searches by workspace and imported course fields", () => {
