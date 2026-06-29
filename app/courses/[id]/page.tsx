@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
-import { ActionHistoryStatus, WorkshopVisibility } from "@prisma/client";
+import { ActionHistoryStatus, Role, WorkshopVisibility } from "@prisma/client";
 import { FilePlus2 } from "lucide-react";
+import { auth } from "@/auth";
 import { CourseDetailWorkflowContext } from "@/components/CourseDetailWorkflowContext";
+import { CourseResourceLinks } from "@/components/CourseResourceLinks";
 import { ReferencePanel } from "@/components/ReferencePanel";
 import { buildCourseBreadcrumbs, EditorBreadcrumbs } from "@/components/workshop-generator/EditorStatus";
 import { recordActionHistory } from "@/lib/action-history";
@@ -15,35 +17,39 @@ export const dynamic = "force-dynamic";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const course = await prisma.course.findUnique({
-    where: { id },
-    include: {
-      sourceImportBatch: true,
-      outcomes: { orderBy: { rowIndex: "asc" } },
-      assets: { orderBy: { createdAt: "desc" }, take: 5 },
-      workspaces: {
-        where: { archivedAt: null },
-        orderBy: { updatedAt: "desc" },
-        include: {
-          workshops: {
-            where: { archivedAt: null },
-            orderBy: { updatedAt: "desc" },
-            select: {
-              id: true,
-              title: true,
-              units: {
-                orderBy: [{ unitNumber: "asc" }, { createdAt: "asc" }],
-                select: { id: true, unitNumber: true, title: true }
+  const [course, session] = await Promise.all([
+    prisma.course.findUnique({
+      where: { id },
+      include: {
+        sourceImportBatch: true,
+        outcomes: { orderBy: { rowIndex: "asc" } },
+        assets: { orderBy: { createdAt: "desc" }, take: 5 },
+        workspaces: {
+          where: { archivedAt: null },
+          orderBy: { updatedAt: "desc" },
+          include: {
+            workshops: {
+              where: { archivedAt: null },
+              orderBy: { updatedAt: "desc" },
+              select: {
+                id: true,
+                title: true,
+                units: {
+                  orderBy: [{ unitNumber: "asc" }, { createdAt: "asc" }],
+                  select: { id: true, unitNumber: true, title: true }
+                }
               }
-            }
-          },
-          _count: { select: { workshops: true } }
+            },
+            _count: { select: { workshops: true } }
+          }
         }
       }
-    }
-  });
+    }),
+    auth()
+  ]);
 
   if (!course) notFound();
+  const isAdmin = session?.user?.role === Role.ADMIN;
   const latestWorkspace = course.workspaces[0] ?? null;
   const courseTitle = [course.courseCode, course.courseName].filter(Boolean).join(" - ");
   const sidebarWorkshops = course.workspaces.flatMap((workspace) =>
@@ -96,6 +102,13 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
           </button>
         </form>
       </section>
+
+      <CourseResourceLinks
+        courseId={course.id}
+        initialSyllabusUrl={course.syllabusUrl}
+        initialCanvasShellUrl={course.canvasShellUrl}
+        isAdmin={isAdmin}
+      />
 
       <ReferencePanel course={course} variant="summary" />
 
