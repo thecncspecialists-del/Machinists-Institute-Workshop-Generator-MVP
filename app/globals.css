@@ -188,6 +188,174 @@ textarea {
   color: var(--sage-strong);
 }
 
+.database-browser-toolbar {
+  display: grid;
+  gap: 16px;
+}
+
+.database-browser-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.database-browser-tab {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 800;
+  padding: 8px 11px;
+}
+
+.database-browser-tab.active,
+.database-browser-tab:hover {
+  background: var(--surface-strong);
+  border-color: color-mix(in srgb, var(--sage) 35%, var(--line));
+  color: var(--sage-strong);
+}
+
+.database-browser-filters {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+.database-browser-table-wrap {
+  max-height: calc(100vh - 380px);
+  min-height: 320px;
+}
+
+.database-browser-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.database-browser-table td {
+  max-width: 340px;
+  vertical-align: top;
+}
+
+.database-browser-details-cell {
+  min-width: 92px;
+}
+
+.database-browser-details summary {
+  color: var(--mi-blue);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.database-browser-details[open] {
+  min-width: min(760px, 78vw);
+}
+
+.database-browser-detail-grid {
+  background: #fbfcfa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 0;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.database-browser-detail-item {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 170px minmax(0, 1fr);
+  padding: 10px 12px;
+}
+
+.database-browser-detail-item + .database-browser-detail-item {
+  border-top: 1px solid var(--line);
+}
+
+.database-browser-detail-item span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.database-browser-detail-item strong,
+.database-browser-detail-item a {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.database-browser-detail-item a {
+  color: var(--mi-blue);
+  text-decoration: underline;
+}
+
+.database-course-link-editor {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.panel-header.compact h3 {
+  margin: 0;
+}
+
+.panel-header.compact p {
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.database-course-link-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(170px, 1fr));
+}
+
+.database-link-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.database-link-list a {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--mi-blue);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 6px;
+  padding: 7px 9px;
+}
+
+.access-diagnostic {
+  background: #fbfcfa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  margin: 12px auto;
+  max-width: 520px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.access-diagnostic span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.access-diagnostic strong {
+  overflow-wrap: anywhere;
+}
+
 .nav-tree {
   gap: 6px;
 }
@@ -2986,6 +3154,9 @@ a:focus-visible {
   .locked-grid,
   .course-resource-grid,
   .course-resource-editor,
+  .database-browser-filters,
+  .database-course-link-grid,
+  .database-browser-detail-item,
   .debug-issue-admin-form,
   .asset-type-tabs,
   .step-workspace,

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, ChevronDown, ChevronRight, ClipboardList, Database, Layers3, LogOut, PanelTop, Sparkles, Trash2 } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, ClipboardList, Database, Layers3, LogOut, PanelTop, Sparkles, TableProperties, Trash2 } from "lucide-react";
 
 import { AdminUserOverlay } from "@/components/admin/AdminUserOverlay";
 import { DebugIssueOverlay } from "@/components/debug/DebugIssueOverlay";
@@ -100,6 +100,11 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function handleSignOut() {
+    await signOut({ callbackUrl: "/sign-in", redirect: false });
+    window.location.assign("/sign-in");
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -127,6 +132,10 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
               <Database size={18} />
               <span>LMS Browser</span>
             </Link>
+            <Link href="/database-browser" className={`nav-link ${pathname.startsWith("/database-browser") ? "active" : ""}`}>
+              <TableProperties size={18} />
+              <span>Database Browser</span>
+            </Link>
           </div>
         </nav>
         <div className="sidebar-footer">
@@ -134,7 +143,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
             <DebugIssueOverlay />
             <AdminUserOverlay />
           </div>
-          <button className="btn ghost sidebar-sign-out" onClick={() => signOut({ callbackUrl: "/sign-in" })}>
+          <button className="btn ghost sidebar-sign-out" onClick={() => void handleSignOut()}>
             <LogOut size={16} />
             <span>Sign Out</span>
           </button>

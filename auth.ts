@@ -7,6 +7,14 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/db";
 
+if (process.env.NODE_ENV !== "production") {
+  const localAuthSecret = "local-development-auth-secret-for-port-3002-only";
+  process.env.AUTH_SECRET ||= localAuthSecret;
+  process.env.NEXTAUTH_SECRET ||= process.env.AUTH_SECRET;
+  process.env.AUTH_URL ||= "http://localhost:3002";
+  process.env.NEXTAUTH_URL ||= "http://localhost:3002";
+}
+
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8)
@@ -14,7 +22,7 @@ const credentialsSchema = z.object({
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt"
   },
@@ -61,6 +69,21 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role?: Role }).role ?? Role.STAFF;
+      }
+      if (token.sub) {
+        const currentUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            email: true,
+            name: true,
+            role: true
+          }
+        });
+        if (currentUser) {
+          token.email = currentUser.email;
+          token.name = currentUser.name;
+          token.role = currentUser.role;
+        }
       }
       return token;
     },
